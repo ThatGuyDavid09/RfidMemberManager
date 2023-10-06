@@ -1,12 +1,12 @@
 import functools
 import os
 import tkinter as tk
+import customtkinter as ctk
 from datetime import datetime, timedelta
 from tkinter import ttk
 import time
 import csv
 import pandas as pd
-
 
 # from breeze import breeze
 
@@ -17,11 +17,10 @@ def get_all_logins():
 
 
 def open_log_window():
-    log_window = tk.Toplevel(root)
+    log_window = ctk.CTkToplevel(root)
     log_window.title("Log Viewer")
 
-    # # Create and pack label for sorting options
-    sort_label = tk.Label(log_window, text="Sort by:")
+    sort_label = ctk.CTkLabel(log_window, text="Sort by:")
     sort_label.pack()
 
     sort_column = tk.StringVar()
@@ -29,8 +28,6 @@ def open_log_window():
     sort_column.set("Member Name")
     sort_order.set("asc")  # Default to ascending order
 
-    #
-    # # Create a StringVar for the menu option
     # sort_option = tk.StringVar()
     # sort_option.set("All Entries")
 
@@ -40,8 +37,8 @@ def open_log_window():
         # selected_option = sort_option.get()
         filtered_data = log_data
 
-        start_date = (start_date_entry.get())
-        end_date = (end_date_entry.get())
+        start_date = start_date_entry.get()
+        end_date = end_date_entry.get()
 
         selected_member = member_name_entry.get()
 
@@ -92,63 +89,53 @@ def open_log_window():
     #                                    command=update_log)
     # member_name_radio.pack()
 
-    # Create and pack widgets for date range and member name input in the log window
-    start_date_label = tk.Label(log_window, text="Start Date (mm/dd/yyyy):")
+    start_date_label = ctk.CTkLabel(log_window, text="Start Date (mm/dd/yyyy):")
     start_date_label.pack()
-    start_date_entry = tk.Entry(log_window)
+    start_date_entry = ctk.CTkEntry(log_window)
     start_date_entry.pack()
 
-    end_date_label = tk.Label(log_window, text="End Date (mm/dd/yyyy):")
+    end_date_label = ctk.CTkLabel(log_window, text="End Date (mm/dd/yyyy):")
     end_date_label.pack()
-    end_date_entry = tk.Entry(log_window)
+    end_date_entry = ctk.CTkEntry(log_window)
     end_date_entry.pack()
 
-    member_name_label = tk.Label(log_window, text="Member Name:")
+    member_name_label = ctk.CTkLabel(log_window, text="Member Name:")
     member_name_label.pack()
-    member_name_entry = tk.Entry(log_window)
+    member_name_entry = ctk.CTkEntry(log_window)
     member_name_entry.pack(pady=(0, 10))
 
-    # Create a button to apply the selected sorting option in the log window
-    apply_button = tk.Button(log_window, text="Apply", command=update_log)
+    apply_button = ctk.CTkButton(log_window, text="Apply", command=update_log)
     apply_button.pack()
 
     log_tree = ttk.Treeview(log_window, columns=("Member Name", "Login Time", "RFID Code"), show="headings")
 
-    # Create a dictionary to map column names to sort orders and icons
     column_sort_data = {
         "Member Name": {"order": "asc", "icon": "↓"},
         "Login Time": {"order": "asc", "icon": "↓"},
         "RFID Code": {"order": "asc", "icon": "↓"},
     }
 
-    # Function to toggle sorting column and order when a column heading is clicked
     def toggle_sort_column(col):
         current_column = sort_column.get()
         current_order = sort_order.get()
 
-        # Toggle the sorting order for the current column
         if current_column == col:
             new_order = "asc" if current_order == "desc" else "desc"
             sort_order.set(new_order)
         else:
-            # Set the new column as the sorting column and reset its order to ascending
             sort_column.set(col)
             sort_order.set("asc")
 
-        # Update the sort icons for all columns
         for column in column_sort_data:
             if column == col:
-                # Set the sort icon for the current column
                 column_sort_data[column]["icon"] = "▲" if sort_order.get() == "asc" else "▼"
             else:
-                # Reset the sort icon for other columns
                 column_sort_data[column]["icon"] = ""
 
         update_log()
         update_sort_icons()
 
     def update_sort_icons():
-        # Update the sort icons in the column headings
         for column in column_sort_data:
             heading_text = column + " " + column_sort_data[column]["icon"]
             log_tree.heading(column, text=heading_text)
@@ -170,6 +157,8 @@ def open_log_window():
     log_window.bind('<Return>', update_log)
 
     update_log()
+
+    log_window.focus()
 
 
 def init_data_files():
@@ -204,15 +193,11 @@ def close_add_member_window():
     add_member_window.destroy()
 
 
-# Function to handle the "search for member" button click
 def search_for_member():
-    # Get the values from the first name and last name entry fields
     first_name = first_name_entry.get()
     last_name = last_name_entry.get()
 
-    # Perform some action with the search results (you can modify this part)
     search_results.delete(0, tk.END)  # Clear previous results
-    # Populate the listbox with search results (replace this with your actual search results)
     search_results.insert(tk.END, f"{first_name} {last_name}")
     # search_results.insert(tk.END, "Result 2")
     # search_results.insert(tk.END, "Result 3")
@@ -220,42 +205,39 @@ def search_for_member():
 
 def open_add_member_window():
     global add_member_window
-    add_member_window = tk.Toplevel(root)
+    add_member_window = ctk.CTkToplevel(root)
     add_member_window.title("Add Member")
 
-    # Create entry fields for first name and last name
     global first_name_entry
-    first_name_label = tk.Label(add_member_window, text="First Name:")
+    first_name_label = ctk.CTkLabel(add_member_window, text="First Name:")
     first_name_label.pack()
-    first_name_entry = tk.Entry(add_member_window)
+    first_name_entry = ctk.CTkEntry(add_member_window)
     first_name_entry.pack()
 
     global last_name_entry
-    last_name_label = tk.Label(add_member_window, text="Last Name:")
+    last_name_label = ctk.CTkLabel(add_member_window, text="Last Name:")
     last_name_label.pack()
-    last_name_entry = tk.Entry(add_member_window)
+    last_name_entry = ctk.CTkEntry(add_member_window)
     last_name_entry.pack()
 
-    # Button to search for a member
-    search_button = tk.Button(add_member_window, text="Search for Member", command=search_for_member)
+    search_button = ctk.CTkButton(add_member_window, text="Search for Member", command=search_for_member)
     search_button.pack(pady=10)
 
-    # Listbox to display search results
     global search_results  # Declare search_results as global
     search_results = tk.Listbox(add_member_window, height=5, width=30)
     search_results.pack(padx=10)
 
-    # Entry field for scanning RFID tag
     global rfid_member_entry
-    rfid_label = tk.Label(add_member_window, text="Scan RFID Tag:")
+    rfid_label = ctk.CTkLabel(add_member_window, text="Scan RFID Tag:")
     rfid_label.pack()
-    rfid_member_entry = tk.Entry(add_member_window)
+    rfid_member_entry = ctk.CTkEntry(add_member_window)
     rfid_member_entry.pack()
 
-    # Button to add a member and close the window
-    add_member_button = tk.Button(add_member_window, text="Add Member", command=close_add_member_window)
+    add_member_button = ctk.CTkButton(add_member_window, text="Add Member", command=close_add_member_window)
     add_member_button.pack(pady=10)
 
+    # add_member_window.after(1000, add_member_window.lift())
+    add_member_window.focus()
 
 def log_entry(event=None):
     rfid_id = rfid_entry.get()
@@ -285,50 +267,44 @@ init_data_files()
 
 members = pd.read_csv("data/members_list.csv")
 
-# Create the main window
-root = tk.Tk()
+ctk.set_appearance_mode("light")
+root = ctk.CTk()
 root.title("Flight Club Sign In")
-root.geometry("500x400")  # Set the initial size of the window
+root.geometry("500x400")
 
-# Create a frame for the RFID ID entry and Enter button
-rfid_frame = tk.Frame(root)
+icon = tk.PhotoImage(file="fc_502_logo.png")
+root.iconphoto(False, icon)
+
+rfid_frame = ctk.CTkFrame(root)
 rfid_frame.pack(side=tk.TOP, padx=10, pady=10)
 
-# Create and place RFID ID label and entry widget
-rfid_label = tk.Label(rfid_frame, text="RFID ID")
-rfid_label.pack(side=tk.LEFT)
+rfid_label = ctk.CTkLabel(rfid_frame, text="RFID ID")
+rfid_label.pack(side=tk.LEFT, padx=(5, 0))
 
-rfid_entry = tk.Entry(rfid_frame, width=15)  # Set the width of the entry field
-rfid_entry.pack(side=tk.LEFT)
+rfid_entry = ctk.CTkEntry(rfid_frame, width=150)
+rfid_entry.pack(side=tk.LEFT, padx=5)
 
-# Bind the Enter key to the RFID entry field
 rfid_entry.bind('<Return>', log_entry)
 
-# Create and place Enter button
-enter_button = tk.Button(rfid_frame, text="Enter", command=log_entry)
+enter_button = ctk.CTkButton(rfid_frame, text="Enter", width=40, command=log_entry)
 enter_button.pack(side=tk.LEFT)
 
-# Create and place View Log button
-view_log_button = tk.Button(root, text="View Log", command=open_log_window)
+view_log_button = ctk.CTkButton(root, text="View Log", command=open_log_window)
 view_log_button.pack(pady=10)
 
-# Create a frame for the table
-table_frame = tk.Frame(root)
+table_frame = ctk.CTkFrame(root)
 table_frame.pack(padx=10, pady=10)
 
-# Create and configure the treeview widget for the table
 columns = ("Member", "Time", "ID")
 tree = ttk.Treeview(table_frame, columns=columns, show="headings")
 
-# Set the width of the columns
 for col in columns:
     tree.heading(col, text=col)
-    tree.column(col, width=150)  # Set the width of the columns
+    tree.column(col, width=150)
 
 tree.pack()
 
-# Create and place Add Member button
-add_member_button = tk.Button(root, text="Add Member", command=open_add_member_window)
+add_member_button = ctk.CTkButton(root, text="Add Member", command=open_add_member_window)
 add_member_button.pack(pady=10)
 
 root.mainloop()
