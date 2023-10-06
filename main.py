@@ -36,6 +36,7 @@ def update_log():
         log_listbox.insert(tk.END, f"Member: {entry['name']}, Login Time: {entry['login_time']}, RFID ID: {entry['rfid_code']}")
 
 def open_log_window():
+    # TODO FIXME This is not working. Stuff is not showing up.
     global view_log_window
     view_log_window = tk.Toplevel(root)
     view_log_window.title("Log")
