@@ -247,7 +247,7 @@ def log_entry(event=None):
         member_name = "UNKNOWN" if member.empty else member["name"].iloc[0]
         member_id = -1 if member.empty else member["member_id"].iloc[0]
 
-        member_data = (member_name, current_datetime, rfid_id)
+        member_data = (member_name, current_datetime)
         tree.insert("", 0, values=member_data)
         rfid_entry.delete(0, "end")
 
@@ -295,7 +295,7 @@ view_log_button.pack(pady=10)
 table_frame = ctk.CTkFrame(root)
 table_frame.pack(padx=10, pady=10)
 
-columns = ("Member", "Time", "ID")
+columns = ("Member name", "Login time")
 tree = ttk.Treeview(table_frame, columns=columns, show="headings")
 
 for col in columns:
