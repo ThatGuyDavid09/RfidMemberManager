@@ -107,7 +107,8 @@ def open_log_window():
     apply_button = ctk.CTkButton(log_window, text="Apply", command=update_log)
     apply_button.pack()
 
-    log_tree = ttk.Treeview(log_window, columns=("Member Name", "Login Time", "RFID Code"), show="headings")
+    log_tree = ttk.Treeview(log_window, columns=("Member Name", "Login Time", "RFID Code"), show="headings",
+                            height=20)
 
     column_sort_data = {
         "Member Name": {"order": "asc", "icon": "↓"},
@@ -146,9 +147,10 @@ def open_log_window():
 
     log_tree.heading("Member Name", text="Member Name", command=lambda: toggle_sort_column("Member Name"))
     log_tree.heading("Login Time", text="Login Time", command=lambda: toggle_sort_column("Login Time"))
+    log_tree.column("Login Time", width=210)
     log_tree.heading("RFID Code", text="RFID Code", command=lambda: toggle_sort_column("RFID Code"))
 
-    log_tree.pack(side="left", fill="both", padx=(10, 0), pady=10)
+    log_tree.pack(side="left", fill="both", padx=(20, 0), pady=20)
 
     log_tree_scrollbar = ttk.Scrollbar(log_window, orient="vertical", command=log_tree.yview)
     log_tree.configure(yscrollcommand=log_tree_scrollbar.set)
@@ -295,12 +297,18 @@ view_log_button.pack(pady=10)
 table_frame = ctk.CTkFrame(root)
 table_frame.pack(padx=10, pady=10)
 
+style = ttk.Style()
+# style.theme_use('clam')
+style.configure("Treeview.Heading", font=(None, 16))
+# style.configure("Treeview.Entry", font=(None, 16))
+style.configure("Treeview", font=(None, 16))
+
 columns = ("Member name", "Login time")
-tree = ttk.Treeview(table_frame, columns=columns, show="headings")
+tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=28)
 
 for col in columns:
     tree.heading(col, text=col)
-    tree.column(col, width=150)
+    tree.column(col, width=500)
 
 tree.pack()
 
