@@ -1,3 +1,4 @@
+import configparser
 import functools
 import os
 import tkinter as tk
@@ -7,6 +8,7 @@ from tkinter import ttk
 import time
 import csv
 import pandas as pd
+
 
 # from breeze import breeze
 
@@ -54,7 +56,8 @@ def open_log_window():
             else:
                 end_date = pd.to_datetime(end_date) + pd.Timedelta(days=1)
 
-            filtered_data = filtered_data.loc[(filtered_data["login_time"] >= start_date) & (filtered_data["login_time"] <= end_date)]
+            filtered_data = filtered_data.loc[
+                (filtered_data["login_time"] >= start_date) & (filtered_data["login_time"] <= end_date)]
         elif selected_member:
             filtered_data = filtered_data[filtered_data["name_lower"].str.contains(selected_member.lower())]
 
@@ -164,13 +167,33 @@ def open_log_window():
 
 
 def init_data_files():
-    if not os.path.isfile("data/members_list.csv"):
+    if not os.path.exists("data/"):
+        os.makedirs("data/")
+
+    if not os.path.exists("data/members_list.csv"):
         with open('data/members_list.csv', 'w', encoding="utf-8") as f:
             f.write('name,rfid_code,member_id\n')
 
-    if not os.path.isfile("data/login_log.csv"):
+    if not os.path.exists("data/login_log.csv"):
         with open('data/login_log.csv', 'w', encoding="utf-8") as f:
             f.write('name,name_lower,rfid_code,member_id,login_time\n')
+
+
+def init_config_file():
+    global breeze_api_key, admin_rfid_id
+
+    if not os.path.exists("config.ini"):
+        with open('config.ini', "w", encoding="utf-8") as f:
+            f.writelines([
+                "[DEFAULT]\n",
+                "AdminRfidCode = -1\n",
+                "BreezeApiKey = -1\n"
+            ])
+
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+    admin_rfid_id = int(config["DEFAULT"]["AdminRfidCode"])
+    breeze_api_key = int(config["DEFAULT"]["BreezeApiKey"])
 
 
 def save_member(rfid_id, name, member_id):
@@ -188,7 +211,7 @@ def close_add_member_window():
     name = search_results.get(selection_index)
 
     rfid_id = rfid_member_entry.get()
-    if len(rfid_id) < 10 or not rfid_id.isdigit():
+    if len(rfid_id) < 2 or not rfid_id.isdigit():
         return
 
     save_member(rfid_id, name, -1)
@@ -241,21 +264,58 @@ def open_add_member_window():
     # add_member_window.after(1000, add_member_window.lift())
     add_member_window.focus()
 
+
+def open_empty_member_log_window(rfid_id):
+    def save_empty_member_entry():
+        name = unknown_member_name_entry.get()
+        save_entry(rfid_id, name if name else None)
+        empty_member_window.destroy()
+
+    empty_member_window = ctk.CTkToplevel(root)
+    empty_member_window.title("Unknown member")
+
+    instruction_label = ctk.CTkLabel(empty_member_window, text="ID not recognized. Please enter name manually.")
+    instruction_label.pack(padx=20, pady=10)
+
+    name_label = ctk.CTkLabel(empty_member_window, text="Name (leave empty for unknown):")
+    name_label.pack(pady=(10, 0))
+    unknown_member_name_entry = ctk.CTkEntry(empty_member_window)
+    unknown_member_name_entry.pack()
+    unknown_member_name_entry.bind("<Return>", save_empty_member_entry)
+
+    log_button = ctk.CTkButton(empty_member_window, text="Save", command=save_empty_member_entry)
+    log_button.pack(pady=10)
+
+    empty_member_window.protocol("WM_DELETE_WINDOW", save_empty_member_entry)
+    empty_member_window.focus()
+
+
 def log_entry(event=None):
     rfid_id = rfid_entry.get()
-    if len(rfid_id) >= 10 and rfid_id.isdigit():  # Validate RFID ID length
-        current_datetime = time.strftime("%Y-%m-%d %H:%M:%S")  # Get the current date and time
+    if len(rfid_id) >= 2 and rfid_id.isdigit():
         member = members.loc[members["rfid_code"] == int(rfid_id)]
-        member_name = "UNKNOWN" if member.empty else member["name"].iloc[0]
-        member_id = -1 if member.empty else member["member_id"].iloc[0]
 
-        member_data = (member_name, current_datetime)
-        tree.insert("", 0, values=member_data)
-        rfid_entry.delete(0, "end")
+        if member.empty or int(rfid_id) == admin_rfid_id:
+            open_empty_member_log_window(rfid_id)
+        else:
+            member_name = member["name"].iloc[0]
+            member_id = member["member_id"].iloc[0]
 
-        with open("data/login_log.csv", "a", encoding="utf-8", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow([member_name, member_name.lower(), rfid_id, member_id, current_datetime])
+            save_entry(rfid_id, member_name, member_id)
+
+
+def save_entry(rfid_id, member_name=None, member_id=-1):
+    if member_name is None:
+        member_name = "UNKNOWN"
+
+    current_datetime = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    member_data = (member_name, current_datetime)
+    recent_entries_tree.insert("", 0, values=member_data)
+    rfid_entry.delete(0, "end")
+    with open("data/login_log.csv", "a", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([member_name, member_name.lower(), rfid_id, member_id, current_datetime])
 
 
 #
@@ -264,15 +324,18 @@ def log_entry(event=None):
 #     api_key="MISSING, WAITING ON IT"
 # )
 
+breeze_api_key = None
+admin_rfid_id = None
 
 init_data_files()
+init_config_file()
 
 members = pd.read_csv("data/members_list.csv")
 
 ctk.set_appearance_mode("light")
 root = ctk.CTk()
 root.title("Flight Club Sign In")
-root.geometry("500x400")
+# root.geometry("500x400")
 
 icon = tk.PhotoImage(file="fc_502_logo.png")
 root.iconphoto(False, icon)
@@ -301,16 +364,16 @@ style = ttk.Style()
 # style.theme_use('clam')
 style.configure("Treeview.Heading", font=(None, 16))
 # style.configure("Treeview.Entry", font=(None, 16))
-style.configure("Treeview", font=(None, 16))
+style.configure("Treeview", font=(None, 16), rowheight=30)
 
 columns = ("Member name", "Login time")
-tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=28)
+recent_entries_tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=15)
 
 for col in columns:
-    tree.heading(col, text=col)
-    tree.column(col, width=500)
+    recent_entries_tree.heading(col, text=col)
+    recent_entries_tree.column(col, width=500)
 
-tree.pack()
+recent_entries_tree.pack()
 
 add_member_button = ctk.CTkButton(root, text="Add Member", command=open_add_member_window)
 add_member_button.pack(pady=10)
