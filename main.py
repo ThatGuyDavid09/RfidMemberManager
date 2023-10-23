@@ -163,6 +163,9 @@ def open_log_window():
 
     update_log()
 
+    log_window.attributes('-topmost', True)
+    log_window.update()
+    log_window.attributes('-topmost', False)
     log_window.focus()
 
 
@@ -262,6 +265,9 @@ def open_add_member_window():
     add_member_button.pack(pady=10)
 
     # add_member_window.after(1000, add_member_window.lift())
+    add_member_window.attributes('-topmost', True)
+    add_member_window.update()
+    add_member_window.attributes('-topmost', False)
     add_member_window.focus()
 
 
@@ -287,6 +293,9 @@ def open_empty_member_log_window(rfid_id):
     log_button.pack(pady=10)
 
     empty_member_window.protocol("WM_DELETE_WINDOW", save_empty_member_entry)
+    app.attributes('-topmost', True).attributes('-topmost', True)
+    app.update().update()
+    app.attributes('-topmost', False).attributes('-topmost', False)
     empty_member_window.focus()
 
 
