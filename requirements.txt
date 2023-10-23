@@ -1,2 +1,3 @@
 customtkinter
 pandas
+packaging
