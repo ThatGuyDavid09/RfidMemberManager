@@ -105,3 +105,6 @@ for member_name_lower in filtered_data.name_lower.unique():
 for member, message in warning_members:
     print(f"WARNING! {member}, {message}")
 print()
+# TODO add maximum hours per period cap
+# TODO add log file
+# TODO add commands
