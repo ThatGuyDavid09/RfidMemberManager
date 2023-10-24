@@ -39,7 +39,8 @@ def init_config_file():
             f.writelines([
                 "[DEFAULT]\n",
                 "AdminRfidCode = -1\n",
-                "FlightCircleApiKey = -1\n"
+                "FlightCircleApiKey = -1\n",
+                "LastLogTimeProcessed = -1\n"
             ])
 
     config = configparser.ConfigParser()
