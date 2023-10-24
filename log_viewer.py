@@ -9,8 +9,19 @@ import time
 import csv
 import pandas as pd
 
-def view_logs():
-    pass
+from LogWindow import LogWindow
+
+def view_logs(events=None):
+    file_path = log_entry.get()
+
+    if os.path.exists(file_path):
+        log_window = LogWindow(root, file_path, 20)
+    else:
+        log_window = ctk.CTkToplevel(root)
+        log_window.title("Error")
+
+        start_date_label = ctk.CTkLabel(log_window, text="That log does not exist!")
+        start_date_label.pack(padx=10, pady=10)
 
 ctk.set_appearance_mode("light")
 root = ctk.CTk()

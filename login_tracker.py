@@ -32,20 +32,20 @@ def init_data_files():
 
 
 def init_config_file():
-    global breeze_api_key, admin_rfid_id
+    global flight_circle_api_key, admin_rfid_id
 
     if not os.path.exists("config.ini"):
         with open('config.ini', "w", encoding="utf-8") as f:
             f.writelines([
                 "[DEFAULT]\n",
                 "AdminRfidCode = -1\n",
-                "BreezeApiKey = -1\n"
+                "FlightCircleApiKey = -1\n"
             ])
 
     config = configparser.ConfigParser()
     config.read("config.ini")
     admin_rfid_id = int(config["DEFAULT"]["AdminRfidCode"])
-    breeze_api_key = int(config["DEFAULT"]["BreezeApiKey"])
+    flight_circle_api_key = int(config["DEFAULT"]["FlightCircleApiKey"])
 
 
 def save_member(rfid_id, name, member_id):
@@ -175,15 +175,8 @@ def save_entry(rfid_id, member_name=None, member_id=-1):
         writer = csv.writer(f)
         writer.writerow([member_name, member_name.lower(), rfid_id, member_id, current_datetime])
 
-
-#
-# breeze_api = breeze.BreezeApi(
-#     breeze_url="https://flightclub502.breezechms.com",
-#     api_key="MISSING, WAITING ON IT"
-# )
-
-breeze_api_key = None
 admin_rfid_id = None
+flight_circle_api_key = None
 
 init_data_files()
 init_config_file()

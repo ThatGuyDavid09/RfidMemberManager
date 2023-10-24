@@ -6,7 +6,7 @@ from tkinter import ttk
 import customtkinter as ctk
 
 class LogWindow:
-    def __init__(self, root, log_file_path):
+    def __init__(self, root, log_file_path, log_tree_height=10):
         self.log_file_path = log_file_path
 
         log_window = ctk.CTkToplevel(root)
@@ -42,7 +42,7 @@ class LogWindow:
         apply_button.pack()
 
         self.log_tree = ttk.Treeview(log_window, columns=("Member Name", "Login Time", "RFID Code"), show="headings",
-                                height=10)
+                                height=log_tree_height)
 
    
     # all_entries_radio = tk.Radiobutton(log_window, text="All Entries", variable=sort_option, value="All Entries",
