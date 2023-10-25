@@ -1,4 +1,3 @@
-import configparser
 import functools
 import os
 import tkinter as tk
@@ -8,6 +7,7 @@ from tkinter import ttk
 import time
 import csv
 import pandas as pd
+from ConfigHandler import ConfigHandler
 
 from LogWindow import LogWindow
 
@@ -31,22 +31,13 @@ def init_data_files():
             f.write('name,name_lower,rfid_code,member_id,login_time\n')
 
 
-def init_config_file():
+def init_config():
     global flight_circle_api_key, admin_rfid_id
 
-    if not os.path.exists("config.ini"):
-        with open('config.ini', "w", encoding="utf-8") as f:
-            f.writelines([
-                "[DEFAULT]\n",
-                "AdminRfidCode = -1\n",
-                "FlightCircleApiKey = -1\n",
-                "LastLogTimeProcessed = -1\n"
-            ])
+    config = ConfigHandler()
 
-    config = configparser.ConfigParser()
-    config.read("config.ini")
-    admin_rfid_id = int(config["DEFAULT"]["AdminRfidCode"])
-    flight_circle_api_key = int(config["DEFAULT"]["FlightCircleApiKey"])
+    admin_rfid_id = int(config.get_config_element("DEFAULT/AdminRfidCode"))
+    flight_circle_api_key = int(config.get_config_element("DEFAULT/FlightCircleApiKey"))
 
 
 def save_member(rfid_id, name, member_id):
@@ -180,7 +171,7 @@ admin_rfid_id = None
 flight_circle_api_key = None
 
 init_data_files()
-init_config_file()
+init_config()
 
 members = pd.read_csv("data/members_list.csv")
 
