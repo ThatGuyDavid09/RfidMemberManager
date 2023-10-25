@@ -20,19 +20,20 @@ def init_config():
 
     config = ConfigHandler()
     flight_circle_api_key = int(config.get_config_element("DEFAULT/FlightCircleApiKey"))
-    last_log_time_processed = int(config.get_config_element("DEFAULT/LastLogTimeProcessed"))
+    last_log_time_processed = (config.get_config_element("DEFAULT/LastLogTimeProcessed"))
     max_hrs_7_days = int(config.get_config_element("DEFAULT/MaxHoursPerWeek"))
     dollars_per_hour = int(config.get_config_element("DEFAULT/DollarsPerHour"))
 
-    if last_log_time_processed == -1:
+    if last_log_time_processed == "-1":
         last_log_time_processed = datetime.today() - timedelta(14)
         last_log_time_processed = datetime(*last_log_time_processed.timetuple()[:3])
+    return config
 
 flight_circle_api_key = None
 last_log_time_processed = None
 max_hrs_7_days = None
 dollars_per_hour = None
-init_config()
+config = init_config()
 
 log_file = ""
 
@@ -224,6 +225,11 @@ def process_commands():
 
             case "confirm":
                 output_log_file()
+
+                config.config["DEFAULT"]["LastLogTimeProcessed"] = str(datetime.strptime(str(datetime.now()).split()[0], r"%Y-%m-%d"))
+                with open('config.ini', 'w') as configfile:
+                    config.config.write(configfile)
+
 
             case "exit":
                 break
