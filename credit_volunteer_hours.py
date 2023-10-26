@@ -55,6 +55,7 @@ if last_log_time_input:
     while True:
         try:
             datetime.strptime(last_log_time_input, r"%m/%d/%Y")
+            break
         except ValueError:
             print("Invalid format!")
             last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or enter to use default: ")
