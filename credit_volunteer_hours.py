@@ -54,7 +54,7 @@ last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or ente
 if last_log_time_input:
     while True:
         try:
-            datetime.strptime(last_log_time_input, r"%m/%d/%Y")
+            last_log_time_processed = datetime.strptime(last_log_time_input, r"%m/%d/%Y")
             break
         except ValueError:
             print("Invalid format!")
