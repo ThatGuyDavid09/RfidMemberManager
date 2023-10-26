@@ -37,7 +37,7 @@ config = init_config()
 
 log_file = ""
 
-login_path = "data/login_log.csv" # input("Enter login path: ")
+login_path = input("Enter login log file path (should be data/something): ")
 while not os.path.exists(login_path):
     print("That file doesn't exist!")
     login_path = input("Enter login path: ")
@@ -49,7 +49,22 @@ filtered_data = filtered_data.loc[
 
 warning_members = []
 member_durations = []
+
+last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or enter to use default: ")
+if last_log_time_input:
+    while True:
+        try:
+            datetime.strptime(last_log_time_input, r"%m/%d/%Y")
+        except ValueError:
+            print("Invalid format!")
+            last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or enter to use default: ")
+
 print(f"Logs since {last_log_time_processed}")
+
+def calculate_to_credit(duration):
+    # Round to nearest hour
+    return round((duration.total_seconds() / 3600) * dollars_per_hour)
+
 
 def process_day_for_member(sorted_logins_df, last_time, member_name_lower, log=False):
     if sorted_logins_df.empty:
@@ -143,7 +158,7 @@ def process_member(member_df, member_name_lower, log=False):
                     final_dur = dur
                     if dur != total_member_duration:
                         f.write(f"Duration manually adjusted, final {dur}\n")
-            f.write(f"Credited {(final_dur.total_seconds() // 3600) * dollars_per_hour}\n")
+            f.write(f"Credited {calculate_to_credit(final_dur)}\n")
     
     if not log:
         print("-" * len(total_dur_mem_string))
@@ -217,7 +232,7 @@ def process_commands():
                     item_copy = item.copy()
                     if item_copy[0] == member_to_search:
                         did_set = True
-                        print(f"{item[0]}: duration {item_copy[1]}, will credit ${(item_copy[1].total_seconds() // 3600) * dollars_per_hour}")
+                        print(f"{item[0]}: duration {item_copy[1]}, will credit ${calculate_to_credit(item_copy[1])}")
                         break
                 
                 if not did_set:
@@ -249,7 +264,7 @@ def output_log_file():
     with open(log_file, "a", encoding="utf-8") as f:
         f.write("\nTo credit:\n")
         for member, dur in member_durations:
-            f.write(f"{member}: duration {timedelta(seconds = dur.total_seconds())}, credit ${(dur.total_seconds() // 3600) * dollars_per_hour}\n")
+            f.write(f"{member}: duration {timedelta(seconds = dur.total_seconds())}, credit ${calculate_to_credit(dur)}\n")
 
 if __name__ == "__main__":
     process_all()
