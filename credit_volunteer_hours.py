@@ -27,6 +27,9 @@ def init_config():
     if last_log_time_processed == "-1":
         last_log_time_processed = datetime.today() - timedelta(14)
         last_log_time_processed = datetime(*last_log_time_processed.timetuple()[:3])
+    else:
+        last_log_time_processed = pd.to_datetime(last_log_time_processed)
+    print(last_log_time_processed)
     return config
 
 flight_circle_api_key = None
@@ -40,9 +43,10 @@ log_file = ""
 login_path = input("Enter login log file path (should be data/something): ")
 while not os.path.exists(login_path):
     print("That file doesn't exist!")
-    login_path = input("Enter login path: ")
+    login_path = input("Enter login log file path: ")
 
 filtered_data = get_all_logins(login_path)
+print(len(filtered_data))
 filtered_data.drop(filtered_data[filtered_data["name_lower"] == "unknown"].index)
 filtered_data = filtered_data.loc[
     (filtered_data["login_time"] >= pd.to_datetime(last_log_time_processed))]
@@ -59,7 +63,7 @@ if last_log_time_input:
         except ValueError:
             print("Invalid format!")
             last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or enter to use default: ")
-
+print(last_log_time_processed)
 print(f"Logs since {last_log_time_processed}")
 
 def calculate_to_credit(duration):
