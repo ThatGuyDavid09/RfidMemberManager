@@ -269,7 +269,7 @@ def output_log_file():
     with open(log_file, "a", encoding="utf-8") as f:
         f.write("\nTo credit:\n")
         for member, dur in member_durations:
-            f.write(f"{member}: duration {timedelta(seconds = dur.total_seconds())}, credit ${calculate_to_credit(dur)}\n")
+            f.write(f"{member}: calculation - {timedelta(hours = round((duration.total_seconds() / 3600))} * ${dollars_per_hour} = ${calculate_to_credit(dur)}\n")
 
 if __name__ == "__main__":
     process_all()
