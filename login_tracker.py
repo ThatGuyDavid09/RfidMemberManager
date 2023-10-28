@@ -28,7 +28,7 @@ def init_data_files():
 
     if not os.path.exists("data/login_log.csv"):
         with open('data/login_log.csv', 'w', encoding="utf-8") as f:
-            f.write('name,name_lower,rfid_code,member_id,login_time\n')
+            f.write('name,name_lower,rfid_code,member_id,login_time,login_reason\n')
 
 
 def init_config():
@@ -92,7 +92,7 @@ def open_add_member_window():
     search_button = ctk.CTkButton(add_member_window, text="Search for Member", command=search_for_member)
     search_button.pack(pady=10)
 
-    global search_results  # Declare search_results as global
+    global search_results
     search_results = tk.Listbox(add_member_window, height=5, width=30)
     search_results.pack(padx=10)
 
@@ -115,7 +115,10 @@ def open_add_member_window():
 def open_empty_member_log_window(rfid_id):
     def save_empty_member_entry():
         name = unknown_member_name_entry.get()
-        save_entry(rfid_id, name if name else None)
+
+        open_request_reason_window(rfid_id, name if name else "unknown", -1)
+
+        # save_entry(rfid_id, name if name else None)
         empty_member_window.destroy()
 
     empty_member_window = ctk.CTkToplevel(root)
@@ -134,11 +137,55 @@ def open_empty_member_log_window(rfid_id):
     log_button.pack(pady=10)
 
     empty_member_window.protocol("WM_DELETE_WINDOW", save_empty_member_entry)
-    empty_member_window.attributes('-topmost', True).attributes('-topmost', True)
-    empty_member_window.update().update()
-    empty_member_window.attributes('-topmost', False).attributes('-topmost', False)
+    empty_member_window.attributes('-topmost', True)
+    empty_member_window.update()
+    empty_member_window.attributes('-topmost', False)
     empty_member_window.focus()
 
+def open_request_reason_window(rfid_id, member_name, member_id):
+    def save_entry_with_reason():
+        selection_index = reason_option.curselection()
+        reason = ""
+        if not selection_index:
+            reason = "unknown"
+        else:
+            reason = reason_option.get(selection_index).lower()
+        save_entry(rfid_id, member_name, member_id, reason)
+        reason_request_window.destroy()
+
+    reason_request_window = ctk.CTkToplevel(root)
+    reason_request_window.title("Input reason")
+
+    instruction_label = ctk.CTkLabel(reason_request_window, text="Please select reason for login:")
+    instruction_label.pack(padx=20, pady=10)
+
+    reasons = [
+        "Volunteering",
+        "Flying",
+        "Ground school",
+        "Work",
+        "Hangar talk",
+        "Other event",
+        "Other"
+    ]
+
+    reason_option = tk.Listbox(reason_request_window, height=len(reasons), width=30)
+    reason_option.pack(padx=10)
+
+    reason_option.delete(0, tk.END)  # Clear previous results
+    for reason in reasons:
+        reason_option.insert(tk.END, reason)
+
+    reason_option.bind("<Return>", save_entry_with_reason)
+
+    log_button = ctk.CTkButton(reason_request_window, text="Save", command=save_entry_with_reason)
+    log_button.pack(pady=10)
+
+    reason_request_window.protocol("WM_DELETE_WINDOW", save_entry_with_reason)
+    reason_request_window.attributes('-topmost', True)
+    reason_request_window.update()
+    reason_request_window.attributes('-topmost', False)
+    reason_request_window.focus()
 
 def log_entry(event=None):
     rfid_id = rfid_entry.get()
@@ -151,21 +198,21 @@ def log_entry(event=None):
             member_name = member["name"].iloc[0]
             member_id = member["member_id"].iloc[0]
 
-            save_entry(rfid_id, member_name, member_id)
+            open_request_reason_window(rfid_id, member_name, member_id)
 
 
-def save_entry(rfid_id, member_name=None, member_id=-1):
+def save_entry(rfid_id, member_name=None, member_id=-1, reason="unknown"):
     if member_name is None:
         member_name = "UNKNOWN"
 
     current_datetime = time.strftime("%Y-%m-%d %H:%M:%S")
 
-    member_data = (member_name, current_datetime)
+    member_data = (member_name, current_datetime, reason)
     recent_entries_tree.insert("", 0, values=member_data)
     rfid_entry.delete(0, "end")
     with open("data/login_log.csv", "a", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([member_name, member_name.lower(), rfid_id, member_id, current_datetime])
+        writer.writerow([member_name, member_name.lower(), rfid_id, member_id, current_datetime, reason.lower()])
 
 admin_rfid_id = None
 flight_circle_api_key = None
@@ -209,7 +256,7 @@ style.configure("Treeview.Heading", font=(None, 16))
 # style.configure("Treeview.Entry", font=(None, 16))
 style.configure("Treeview", font=(None, 16), rowheight=30)
 
-columns = ("Member name", "Login time")
+columns = ("Member name", "Login time", "Login reason")
 recent_entries_tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=15)
 
 for col in columns:

@@ -36,12 +36,18 @@ class LogWindow:
         member_name_label = ctk.CTkLabel(log_window, text="Member Name:")
         member_name_label.pack()
         self.member_name_entry = ctk.CTkEntry(log_window)
-        self.member_name_entry.pack(pady=(0, 10))
+        self.member_name_entry.pack()
+
+        login_reason_label = ctk.CTkLabel(log_window, text="Login Reason:")
+        login_reason_label.pack()
+        self.login_reason_entry = ctk.CTkEntry(log_window)
+        self.login_reason_entry.pack(pady=(0, 10))
+
 
         apply_button = ctk.CTkButton(log_window, text="Apply", command=self.update_log)
         apply_button.pack()
 
-        self.log_tree = ttk.Treeview(log_window, columns=("Member Name", "Login Time", "RFID Code"), show="headings",
+        self.log_tree = ttk.Treeview(log_window, columns=("Member Name", "Login Time", "Login Reason"), show="headings",
                                 height=log_tree_height)
 
    
@@ -60,17 +66,17 @@ class LogWindow:
         self.column_sort_data = {
             "Member Name": {"order": "asc", "icon": "↓"},
             "Login Time": {"order": "asc", "icon": "↓"},
-            "RFID Code": {"order": "asc", "icon": "↓"},
+            "Login Reason": {"order": "asc", "icon": "↓"},
         }
 
         for column in self.column_sort_data:
             self.log_tree.heading(column, text=column + " " + self.column_sort_data[column]["icon"],
-                            command=lambda c=column: self.toggle_self.sort_column(c))
+                            command=lambda c=column: self.toggle_sort_column(c))
 
-        self.log_tree.heading("Member Name", text="Member Name", command=lambda: self.toggle_self.sort_column("Member Name"))
-        self.log_tree.heading("Login Time", text="Login Time", command=lambda: self.toggle_self.sort_column("Login Time"))
+        self.log_tree.heading("Member Name", text="Member Name", command=lambda: self.toggle_sort_column("Member Name"))
+        self.log_tree.heading("Login Time", text="Login Time", command=lambda: self.toggle_sort_column("Login Time"))
         self.log_tree.column("Login Time", width=210)
-        self.log_tree.heading("RFID Code", text="RFID Code", command=lambda: self.toggle_self.sort_column("RFID Code"))
+        self.log_tree.heading("Login Reason", text="Login Reason", command=lambda: self.toggle_sort_column("Login Reason"))
 
         self.log_tree.pack(side="left", fill="both", padx=(20, 0), pady=20)
 
@@ -96,7 +102,9 @@ class LogWindow:
         start_date = self.start_date_entry.get()
         end_date = self.end_date_entry.get()
 
-        selected_member = self.member_name_entry.get()
+        selected_member = self.member_name_entry.get().lower()
+
+        login_reason = self.login_reason_entry.get().lower()
 
         if start_date or end_date:
             if not start_date:
@@ -112,8 +120,10 @@ class LogWindow:
 
             filtered_data = filtered_data.loc[
                 (filtered_data["login_time"] >= start_date) & (filtered_data["login_time"] <= end_date)]
-        elif selected_member:
-            filtered_data = filtered_data[filtered_data["name_lower"].str.contains(selected_member.lower())]
+        if selected_member:
+            filtered_data = filtered_data[filtered_data["name_lower"].str.contains(selected_member)]
+        if login_reason:
+            filtered_data = filtered_data[filtered_data["login_reason"].str.contains(login_reason)]
 
         for record in self.log_tree.get_children():
             self.log_tree.delete(record)
@@ -121,7 +131,7 @@ class LogWindow:
         column_mapping = {
             "member name": "name",
             "login time": "login_time",
-            "rfid code": "rfid_code"
+            "login reason": "login_reason"
         }
 
         key = column_mapping[self.sort_column.get().lower()]
@@ -131,8 +141,8 @@ class LogWindow:
         for _, entry in sorted_data.iterrows():
             member_name = entry["name"]
             login_time = entry["login_time"]
-            rfid_id = entry["rfid_code"]
-            self.log_tree.insert("", "end", values=(member_name, login_time, rfid_id))
+            login_reason = entry["login_reason"]
+            self.log_tree.insert("", "end", values=(member_name, login_time, login_reason.capitalize()))
 
     def toggle_sort_column(self, col):
         current_column = self.sort_column.get()

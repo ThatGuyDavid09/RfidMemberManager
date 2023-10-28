@@ -46,10 +46,12 @@ while not os.path.exists(login_path):
     login_path = input("Enter login log file path: ")
 
 filtered_data = get_all_logins(login_path)
-print(len(filtered_data))
-filtered_data.drop(filtered_data[filtered_data["name_lower"] == "unknown"].index)
-filtered_data = filtered_data.loc[
-    (filtered_data["login_time"] >= pd.to_datetime(last_log_time_processed))]
+# print(len(filtered_data))
+# print(filtered_data[filtered_data["login_reason"] != "volunteering"])
+filtered_data.drop(filtered_data[filtered_data["name_lower"] == "unknown"].index, inplace=True)
+filtered_data.drop(filtered_data[filtered_data["login_reason"] != "volunteering"].index, inplace=True)
+# print()
+# print(filtered_data[filtered_data["login_reason"] != "volunteering"])
 
 warning_members = []
 member_durations = []
@@ -63,7 +65,11 @@ if last_log_time_input:
         except ValueError:
             print("Invalid format!")
             last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or enter to use default: ")
-print(last_log_time_processed)
+# print(last_log_time_processed)
+
+filtered_data = filtered_data.loc[
+    (filtered_data["login_time"] >= pd.to_datetime(last_log_time_processed))]
+
 print(f"Logs since {last_log_time_processed}")
 
 def calculate_to_credit(duration):
@@ -163,7 +169,7 @@ def process_member(member_df, member_name_lower, log=False):
                     final_dur = dur
                     if dur != total_member_duration:
                         f.write(f"Duration manually adjusted, final {dur}\n")
-            f.write(f"Credited {calculate_to_credit(final_dur)}\n")
+            f.write(f"Credited ${calculate_to_credit(final_dur)}\n")
     
     if not log:
         print("-" * len(total_dur_mem_string))
@@ -269,7 +275,7 @@ def output_log_file():
     with open(log_file, "a", encoding="utf-8") as f:
         f.write("\nTo credit:\n")
         for member, dur in member_durations:
-            f.write(f"{member}: calculation - {timedelta(hours = round((duration.total_seconds() / 3600))} * ${dollars_per_hour} = ${calculate_to_credit(dur)}\n")
+            f.write(f"{member} calculation: {round(dur.total_seconds() / 3600)}hr * ${dollars_per_hour}/hr = ${calculate_to_credit(dur)}\n")
 
 if __name__ == "__main__":
     process_all()
