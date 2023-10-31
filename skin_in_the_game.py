@@ -66,10 +66,8 @@ if last_log_time_input:
             print("Invalid format!")
             last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or enter to use default: ")
 # print(last_log_time_processed)
-
 filtered_data = filtered_data.loc[
     (filtered_data["login_time"] >= pd.to_datetime(last_log_time_processed))]
-
 print(f"Logs since {last_log_time_processed}")
 
 def calculate_to_credit(duration):
