@@ -160,12 +160,15 @@ def open_request_reason_window(rfid_id, member_name, member_id):
     instruction_label.pack(padx=20, pady=10)
 
     reasons = [
-        "Volunteering",
-        "Flying",
+        "Volunteering - skin in the game",
+        "Volunteering - general",
+        "Flight lessons/study",
+        "CFI",
+        "Genral clubhouse use - nonflying",
         "Ground school",
-        "Work",
-        "Hangar talk",
-        "Other event",
+        "Hangar talk/Monthy meeting",
+        "Visitor",
+        "Event",
         "Other"
     ]
 

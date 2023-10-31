@@ -29,7 +29,7 @@ def init_config():
         last_log_time_processed = datetime(*last_log_time_processed.timetuple()[:3])
     else:
         last_log_time_processed = pd.to_datetime(last_log_time_processed)
-    print(last_log_time_processed)
+    # print(last_log_time_processed)
     return config
 
 flight_circle_api_key = None
@@ -49,14 +49,14 @@ filtered_data = get_all_logins(login_path)
 # print(len(filtered_data))
 # print(filtered_data[filtered_data["login_reason"] != "volunteering"])
 filtered_data.drop(filtered_data[filtered_data["name_lower"] == "unknown"].index, inplace=True)
-filtered_data.drop(filtered_data[filtered_data["login_reason"] != "volunteering"].index, inplace=True)
+filtered_data.drop(filtered_data[filtered_data["login_reason"] != "volunteering - skin in the game"].index, inplace=True)
 # print()
 # print(filtered_data[filtered_data["login_reason"] != "volunteering"])
 
 warning_members = []
 member_durations = []
 
-last_log_time_input = input("Enter earliest day to process (mm/dd/yyyy), or enter to use default: ")
+last_log_time_input = input(f"Enter earliest day to process (mm/dd/yyyy), or enter to use {last_log_time_processed}: ")
 if last_log_time_input:
     while True:
         try:
