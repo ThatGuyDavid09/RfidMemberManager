@@ -13,7 +13,8 @@ class ConfigHandler:
                     "FlightCircleApiKey = -1\n",
                     "LastLogTimeProcessed = -1\n",
                     "MaxHoursPerWeek = 12\n",
-                    "DollarsPerHour = 16\n"
+                    "DollarsPerHour = 16\n",
+                    "LoginSearchTypeTag = volunteering - skin in the game\n"
                 ])
 
         self.config = configparser.ConfigParser()

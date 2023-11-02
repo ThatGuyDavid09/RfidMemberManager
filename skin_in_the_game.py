@@ -4,15 +4,12 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from pprint import pprint
+import sys
 import time
 import csv
 import pandas as pd
 
 from ConfigHandler import ConfigHandler
-
-# IMPORTANT: Change this to the EXACT login type tag that you want to search 
-login_type_tag_to_search = "volunteering - skin in the game"
-login_type_tag_to_search = login_type_tag_to_search.lower()
 
 def get_all_logins(login_path):
         logins = pd.read_csv(login_path)
@@ -20,13 +17,14 @@ def get_all_logins(login_path):
         return logins
 
 def init_config():
-    global flight_circle_api_key, last_log_time_processed, max_hrs_7_days, dollars_per_hour
+    global flight_circle_api_key, last_log_time_processed, max_hrs_7_days, dollars_per_hour, login_type_tag_to_search
 
     config = ConfigHandler()
     flight_circle_api_key = int(config.get_config_element("DEFAULT/FlightCircleApiKey"))
     last_log_time_processed = (config.get_config_element("DEFAULT/LastLogTimeProcessed"))
     max_hrs_7_days = int(config.get_config_element("DEFAULT/MaxHoursPerWeek"))
     dollars_per_hour = int(config.get_config_element("DEFAULT/DollarsPerHour"))
+    login_type_tag_to_search = str(config.get_config_element("DEFAULT/LoginSearchTypeTag")).lower()
 
     if last_log_time_processed == "-1":
         last_log_time_processed = datetime.today() - timedelta(14)
@@ -40,6 +38,7 @@ flight_circle_api_key = None
 last_log_time_processed = None
 max_hrs_7_days = None
 dollars_per_hour = None
+login_type_tag_to_search = None
 config = init_config()
 
 log_file = ""
@@ -188,7 +187,8 @@ def process_all(log=False):
 def print_warnings():
     if len(member_durations) == 0:
         print("No logs found!")
-        print("Make sure your file path is correct and you are searching for the correct tag")
+        print("Make sure your file path is correct and you are searching for the correct tag.")
+        sys.exit()
 
     for member, message in warning_members:
         print(f"WARNING! {member}, {message}")
