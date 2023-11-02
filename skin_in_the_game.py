@@ -10,6 +10,10 @@ import pandas as pd
 
 from ConfigHandler import ConfigHandler
 
+# IMPORTANT: Change this to the EXACT login type tag that you want to search 
+login_type_tag_to_search = "volunteering - skin in the game"
+login_type_tag_to_search = login_type_tag_to_search.lower()
+
 def get_all_logins(login_path):
         logins = pd.read_csv(login_path)
         logins["login_time"] = pd.to_datetime(logins["login_time"])
@@ -49,7 +53,7 @@ filtered_data = get_all_logins(login_path)
 # print(len(filtered_data))
 # print(filtered_data[filtered_data["login_reason"] != "volunteering"])
 filtered_data.drop(filtered_data[filtered_data["name_lower"] == "unknown"].index, inplace=True)
-filtered_data.drop(filtered_data[filtered_data["login_reason"] != "volunteering - skin in the game"].index, inplace=True)
+filtered_data.drop(filtered_data[filtered_data["login_reason"] != login_type_tag_to_search].index, inplace=True)
 # print()
 # print(filtered_data[filtered_data["login_reason"] != "volunteering"])
 
@@ -182,8 +186,13 @@ def process_all(log=False):
         process_member(member_df, member_name_lower, log=log)
 
 def print_warnings():
+    if len(member_durations) == 0:
+        print("No logs found!")
+        print("Make sure your file path is correct and you are searching for the correct tag")
+
     for member, message in warning_members:
         print(f"WARNING! {member}, {message}")
+    
     print()
 
 def process_commands():
