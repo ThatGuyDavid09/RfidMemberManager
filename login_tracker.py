@@ -201,7 +201,13 @@ def log_entry(event=None):
             member_name = member["name"].iloc[0]
             member_id = member["member_id"].iloc[0]
 
-            open_request_reason_window(rfid_id, member_name, member_id)
+            # I did this hack because of Liam. I hate him.
+            if "(work)" in member_name:
+                member_name = member_name.replace(" (work)", "")
+                save_entry(rfid_id, member_name, reason="volunteering - skin in the game")
+            else:
+                #save_entry(rfid_id, member_name)
+                open_request_reason_window(rfid_id, member_name, member_id)
 
 
 def save_entry(rfid_id, member_name=None, member_id=-1, reason="unknown"):
