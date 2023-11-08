@@ -1,5 +1,6 @@
 import functools
 import os
+import sys
 import tkinter as tk
 import customtkinter as ctk
 from datetime import datetime, timedelta
@@ -7,6 +8,8 @@ from tkinter import ttk
 import time
 import csv
 import pandas as pd
+import pynput as pynput
+
 from ConfigHandler import ConfigHandler
 
 from LogWindow import LogWindow
@@ -113,10 +116,11 @@ def open_add_member_window():
 
 
 def open_empty_member_log_window(rfid_id):
-    def save_empty_member_entry():
+    def save_empty_member_entry(event=None):
         name = unknown_member_name_entry.get()
 
-        open_request_reason_window(rfid_id, name if name else "unknown", -1)
+        # open_request_reason_window(rfid_id, name if name else "unknown", -1)
+        save_entry(rfid_id, name if name else "unknown", reason="general")
 
         # save_entry(rfid_id, name if name else None)
         empty_member_window.destroy()
@@ -141,6 +145,7 @@ def open_empty_member_log_window(rfid_id):
     empty_member_window.update()
     empty_member_window.attributes('-topmost', False)
     empty_member_window.focus()
+
 
 def open_request_reason_window(rfid_id, member_name, member_id):
     def save_entry_with_reason():
@@ -190,8 +195,10 @@ def open_request_reason_window(rfid_id, member_name, member_id):
     reason_request_window.attributes('-topmost', False)
     reason_request_window.focus()
 
-def log_entry(event=None):
-    rfid_id = rfid_entry.get()
+
+def log_entry(event=None, rfid_id=None):
+    # if rfid_id is None:
+    #     rfid_id = rfid_entry.get()
     if len(rfid_id) >= 2 and rfid_id.isdigit():
         member = members.loc[members["rfid_code"] == int(rfid_id)]
 
@@ -206,7 +213,7 @@ def log_entry(event=None):
                 save_entry(rfid_id, member_name, reason="volunteering - skin in the game")
             else:
                 save_entry(rfid_id, member_name, reason="general")
-                #open_request_reason_window(rfid_id, member_name, member_id)
+                # open_request_reason_window(rfid_id, member_name, member_id)
 
 
 def save_entry(rfid_id, member_name=None, member_id=-1, reason="unknown"):
@@ -217,10 +224,36 @@ def save_entry(rfid_id, member_name=None, member_id=-1, reason="unknown"):
 
     member_data = (member_name, current_datetime, reason)
     recent_entries_tree.insert("", 0, values=member_data)
-    rfid_entry.delete(0, "end")
+    # rfid_entry.delete(0, "end")
     with open("data/login_log.csv", "a", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([member_name, member_name.lower(), rfid_id, member_id, current_datetime, reason.lower()])
+
+
+currently_pressed_keys = ""
+# TODO verify this is the length of rfid codes
+
+rfid_code_length = 10
+
+def on_key_press(key):
+    global currently_pressed_keys
+
+    try:
+        key = key.char
+        if not key.isdigit():
+            return
+        currently_pressed_keys += key
+        if len(currently_pressed_keys) > rfid_code_length:
+            currently_pressed_keys = currently_pressed_keys[1:]
+        # print(currently_pressed_keys)
+    except AttributeError:
+        if key == pynput.keyboard.Key.enter and len(currently_pressed_keys) == rfid_code_length:
+            log_entry(rfid_id=currently_pressed_keys)
+            currently_pressed_keys = ""
+
+
+listener = pynput.keyboard.Listener(on_press=on_key_press)
+listener.start()
 
 admin_rfid_id = None
 flight_circle_api_key = None
@@ -233,24 +266,25 @@ members = pd.read_csv("data/members_list.csv")
 ctk.set_appearance_mode("light")
 root = ctk.CTk()
 root.title("Flight Club Sign In")
+# root.protocol("WM_DELETE_WINDOW", close_main_window)
 # root.geometry("500x400")
 
 icon = tk.PhotoImage(file="fc_502_logo.png")
 root.iconphoto(False, icon)
 
-rfid_frame = ctk.CTkFrame(root)
-rfid_frame.pack(side=tk.TOP, padx=10, pady=10)
-
-rfid_label = ctk.CTkLabel(rfid_frame, text="RFID ID")
-rfid_label.pack(side=tk.LEFT, padx=(5, 0))
-
-rfid_entry = ctk.CTkEntry(rfid_frame, width=150)
-rfid_entry.pack(side=tk.LEFT, padx=5)
-
-rfid_entry.bind('<Return>', log_entry)
-
-enter_button = ctk.CTkButton(rfid_frame, text="Enter", width=40, command=log_entry)
-enter_button.pack(side=tk.LEFT)
+# rfid_frame = ctk.CTkFrame(root)
+# rfid_frame.pack(side=tk.TOP, padx=10, pady=10)
+#
+# rfid_label = ctk.CTkLabel(rfid_frame, text="RFID ID")
+# rfid_label.pack(side=tk.LEFT, padx=(5, 0))
+#
+# rfid_entry = ctk.CTkEntry(rfid_frame, width=150)
+# rfid_entry.pack(side=tk.LEFT, padx=5)
+#
+# rfid_entry.bind('<Return>', log_entry)
+#
+# enter_button = ctk.CTkButton(rfid_frame, text="Enter", width=40, command=log_entry)
+# enter_button.pack(side=tk.LEFT)
 
 view_log_button = ctk.CTkButton(root, text="View Log", command=open_log_window)
 view_log_button.pack(pady=10)
@@ -277,3 +311,11 @@ add_member_button = ctk.CTkButton(root, text="Add Member", command=open_add_memb
 add_member_button.pack(pady=10)
 
 root.mainloop()
+
+# while not exit_flag:
+#     print("test")
+#     if exit_flag:
+#         break
+
+# root.update_idletasks()
+# root.update()
