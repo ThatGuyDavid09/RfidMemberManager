@@ -165,7 +165,7 @@ def open_request_reason_window(rfid_id, member_name, member_id):
     instruction_label.pack(padx=20, pady=10)
 
     reasons = [
-        "Volunteering - skin in the game",
+        "Work to fly",
         "Volunteering - general",
         "Flight lessons/study",
         "CFI",
@@ -210,7 +210,7 @@ def log_entry(event=None, rfid_id=None):
 
             if "(work)" in member_name:
                 member_name = member_name.replace(" (work)", "")
-                save_entry(rfid_id, member_name, reason="volunteering - skin in the game")
+                save_entry(rfid_id, member_name, reason="work to fly")
             else:
                 save_entry(rfid_id, member_name, reason="general")
                 # open_request_reason_window(rfid_id, member_name, member_id)
