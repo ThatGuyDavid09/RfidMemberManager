@@ -188,6 +188,7 @@ def print_warnings():
     if len(member_durations) == 0:
         print("No logs found!")
         print("Make sure your file path is correct and you are searching for the correct tag.")
+        input()
         sys.exit()
 
     for member, message in warning_members:
