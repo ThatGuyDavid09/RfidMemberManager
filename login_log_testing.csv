@@ -1,0 +1,29 @@
+name,name_lower,rfid_code,member_id,login_time,login_reason
+Member 1,member 1,0014758926,-1,2023-10-21 10:00:58,work to fly
+Member 1,member 1,0014758926,-1,2023-10-21 01:00:53,work to fly
+Member 1,member 1,0014758926,-1,2023-10-22 10:00:54,work to fly
+Member 1,member 1,0014758926,-1,2023-10-22 01:00:53,work to fly
+Member 1,member 1,0014758926,-1,2023-10-23 10:00:54,work to fly
+Member 1,member 1,0014758926,-1,2023-10-23 01:00:53,work to fly
+Member 2,member 2,0014722509,-1,2023-10-24 10:01:10,work to fly
+Member 3,member 3,0015290872,-1,2023-10-24 10:01:23,work to fly
+Member 4,member 4,0014973464,-1,2023-10-24 10:01:38,unknown
+Member 3,member 3,0015290872,-1,2023-10-24 10:01:41,work to fly
+Member 1,member 1,0014758926,-1,2023-10-23 10:01:42,work to fly
+Member 2,member 2,0014722509,-1,2023-10-24 10:01:43,work to fly
+Member 4,member 4,0014973464,-1,2023-10-24 10:01:44,unknown
+Member 3,member 3,0015290872,-1,2023-10-24 10:01:46,work to fly
+Member 1,member 1,0014758926,-1,2023-10-24 10:01:47,work to fly
+Member 2,member 2,0014722509,-1,2023-10-24 10:01:48,work to fly
+Member 1,member 1,0014758926,-1,2023-10-24 10:01:48,work to fly
+Member 4,member 4,0014973464,-1,2023-10-24 10:01:50,unknown
+Member 3,member 3,0015290872,-1,2023-10-24 10:01:50,work to fly
+Member 4,member 4,0014973464,-1,2023-10-24 10:01:51,unknown
+Member 2,member 2,0014722509,-1,2023-10-24 10:01:53,work to fly
+Member 1,member 1,0014758926,-1,2023-10-24 10:01:53,work to fly
+Member 3,member 3,0015290872,-1,2023-10-24 10:01:55,work to fly
+Member 4,member 4,0014973464,-1,2023-10-24 10:01:55,unknown
+Member 1,member 1,0014758926,-1,2023-10-24 11:12:11,work to fly
+Member 4,member 4,0014973464,-1,2023-10-24 11:12:15,unknown
+Member 3,member 3,0015290872,-1,2023-10-24 11:12:17,work to fly
+Member 2,member 2,0014722509,-1,2023-10-24 11:12:18,work to fly
