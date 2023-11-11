@@ -1,5 +1,7 @@
 import string
 import tkinter as tk
+import tkcalendar
+from tkinter import simpledialog
 import customtkinter as ctk
 from pathlib import Path
 from tkinter import ttk
@@ -156,6 +158,7 @@ def process_member(member_df, member_name_lower):
         total_member_duration += dur_to_add
 
     weeks_duration = ((last_time - timedelta(1)) - last_log_time_processed).to_pytimedelta().days / 7
+    # FIXME this does not work
     max_hours = timedelta(hours=weeks_duration * max_hrs_7_days)
 
     if total_member_duration > max_hours:
@@ -255,15 +258,15 @@ def init_config():
     # print(last_log_time_processed)
     return config
 
-
-def filter_by_member_name(name):
+member_search_job_id = None
+member_search_last_update = datetime.now()
+def filter_by_member_name(name=""):
     if preprocessed_data_df is None:
         fetch_and_process_file()
     
     members_treeview.delete(*members_treeview.get_children())
     name_filtered_df = preprocessed_data_df[preprocessed_data_df["name_lower"].str.contains(name.lower())]
-    process_data(name_filtered_df)
-        
+    process_data(name_filtered_df)        
 
 
 def member_search_name_update(stringvar):
@@ -274,7 +277,56 @@ def member_search_name_update(stringvar):
     member_search_job_id = root.after(800, lambda name=stringvar.get(): filter_by_member_name(name))        
 
 
-member_search_job_id = None
+def setup_member_treeview_heading():
+    members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")}")
+
+
+class OptionsMenu(tk.Tk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("Options Menu")
+
+        tk.Label(self, text="Maximum Hours per Week:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        self.max_hours_per_week = tk.Entry(self)
+        self.max_hours_per_week.insert(0, max_hrs_7_days)
+        self.max_hours_per_week.grid(row=0, column=1, padx=10, pady=5)
+
+        tk.Label(self, text="Earliest Log to Process:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        # tk.Button(self, text="Select Date", command=self.select_date).grid(row=1, column=1, padx=10, pady=5)
+        self.earliest_log_date = tkcalendar.DateEntry(self, selectmode='day', 
+                                                      year=last_log_time_processed.year,
+                                                      month=last_log_time_processed.month,
+                                                      day=last_log_time_processed.day)
+        self.earliest_log_date.grid(row=1, column=1, padx=10, pady=5)
+        # tk.Entry(self, text="Select Date", date=True)
+
+        tk.Label(self, text="Dollars per Hour:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        self.dollars_per_hour = tk.Entry(self)
+        self.dollars_per_hour.insert(0, dollars_per_hour)
+        self.dollars_per_hour.grid(row=2, column=1, padx=10, pady=5)
+
+        tk.Button(self, text="Confirm", command=self.save_changes).grid(row=3, column=0, columnspan=2, pady=10)
+
+    def select_date(self):
+        selected_date = simpledialog.askstring("Select Date", "Choose the earliest log date:")
+        self.earliest_log_date.set(selected_date)
+
+    def save_changes(self):
+        global max_hrs_7_days, last_log_time_processed, dollars_per_hour
+
+        max_hrs_7_days = int(self.max_hours_per_week.get())
+        # Needed to allow proper processing by strptime
+        date_str = "/".join([i.zfill(2) for i in self.earliest_log_date.get().split("/")])
+        last_log_time_processed = datetime.strptime(date_str, r"%m/%d/%y")
+        setup_member_treeview_heading()
+        dollars_per_hour = int(self.dollars_per_hour.get())
+
+        filter_by_member_name()
+
+        self.destroy()
+
+
 last_log_time_processed = None
 max_hrs_7_days = None
 dollars_per_hour = None
@@ -293,7 +345,6 @@ button_frame.pack(side=tk.TOP, padx=10, pady=10)
 file_button = ctk.CTkButton(button_frame, text="Select file", command=fetch_and_process_file)
 file_button.pack(side=tk.LEFT, padx=(0, 10))
 
-member_search_last_update = datetime.now()
 member_search_sv = ctk.StringVar()
 member_search_sv.trace("w", lambda name, index, mode, sv=member_search_sv: member_search_name_update(sv))
 member_search_entry = ctk.CTkEntry(button_frame, corner_radius=5,
@@ -302,7 +353,7 @@ member_search_entry = ctk.CTkEntry(button_frame, corner_radius=5,
                                    textvariable=member_search_sv)
 member_search_entry.pack(side=tk.LEFT, padx=(0, 10))
 
-options_button = ctk.CTkButton(button_frame, text="Options", width=100)
+options_button = ctk.CTkButton(button_frame, text="Options", width=100, command=OptionsMenu)
 options_button.pack(side=tk.LEFT, padx=(0, 10))
 
 confirm_button = ctk.CTkButton(button_frame, text="Confirm", width=100)
@@ -315,7 +366,8 @@ confirm_button.pack(side=tk.LEFT)
 members_treeview = ttk.Treeview(root, height=20)
 # members_treeview.heading("log_time", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")}")
 # members_treeview.column("log_time", width=400, stretch=tk.YES)
-members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")}")
+
+setup_member_treeview_heading()
 members_treeview.column("#0", width=400, stretch=tk.YES)
 # members_treeview.insert('', 'end', '1234', text='Widget Tour')
 # members_treeview.insert("widgets", 'end', 'widgets2', text='child')
