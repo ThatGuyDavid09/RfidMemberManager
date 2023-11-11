@@ -50,7 +50,11 @@ def add_member_to_treeview(member_info):
     total_duration_hours = 0
     for day in member_info["days"]:
         day_id = top_level_id + f"_{day["day"].strftime(r"%d%m%y")}"
-        members_treeview.insert(top_level_id, "end", day_id, text=day["day"].strftime(r"%m/%d/%y"))
+
+        hours_for_day = sum([round((time[1] - time[0]).total_seconds() / 3600) for time in day["times"] if type(time[1]) != str])
+        day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {hours_for_day} hours * ${dollars_per_hour} = {hours_for_day * dollars_per_hour}"
+
+        members_treeview.insert(top_level_id, "end", day_id, text=day_text)
         for start, end in day["times"]:
             time_id = day_id + f"_{start.strftime(r"%H%M%S")}"
             duration = None if type(end) == str else end - start
@@ -65,10 +69,6 @@ def add_member_to_treeview(member_info):
 
 
 def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
-    if sorted_logins_df.empty:
-        last_time = last_time + timedelta(1)
-        return last_time, timedelta(0)
-
     logged_times = []
     warnings = []
 
@@ -76,6 +76,10 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
         "day": last_time,
         "times": []
     }
+    
+    if sorted_logins_df.empty:
+        last_time = last_time + timedelta(1)
+        return last_time, timedelta(0), day_struct, warnings
 
     start_time = None
     # member_df_time_sorted.sort_values(by="login_time", ascending=True)
@@ -146,7 +150,8 @@ def process_member(member_df, member_name_lower):
 
         last_time, dur_to_add, day_struct, warning_member = process_day_for_member(member_df_time_sorted, last_time, member_name_lower)
         warnings.extend(warning_member)
-        member_structure["days"].append(day_struct)
+        if day_struct["times"]:
+            member_structure["days"].append(day_struct)
         total_member_duration += dur_to_add
 
     weeks_duration = ((last_time - timedelta(1)) - last_log_time_processed).to_pytimedelta().days / 7
@@ -210,6 +215,7 @@ def preprocess_data(df):
 
     df.drop(df[df["name_lower"] == "unknown"].index, inplace=True)
     df.drop(df[df["login_reason"] != login_type_tag_to_search].index, inplace=True)
+    df["login_time"] = pd.to_datetime(df["login_time"])
     preprocessed_data_df = df
     return df
 
