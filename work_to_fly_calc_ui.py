@@ -1,3 +1,4 @@
+import string
 import tkinter as tk
 import customtkinter as ctk
 from pathlib import Path
@@ -46,7 +47,7 @@ Takes the following format as member_info
 """
 def add_member_to_treeview(member_info):
     top_level_id = member_info["name"].lower().replace(" ", "_")
-    members_treeview.insert("", "end", top_level_id, text=member_info["name"])
+    members_treeview.insert("", "end", top_level_id, text=string.capwords(member_info["name"]))
     total_duration_hours = 0
     for day in member_info["days"]:
         day_id = top_level_id + f"_{day["day"].strftime(r"%d%m%y")}"
@@ -196,6 +197,7 @@ def process_member(member_df, member_name_lower):
     #     with open(log_file, "a", encoding="utf-8") as f:
     #         f.write("-" * len(total_dur_mem_string) + "\n")
 
+
 def process_data(data_df):
     warnings = []
     all_members = []
@@ -254,6 +256,25 @@ def init_config():
     return config
 
 
+def filter_by_member_name(name):
+    if preprocessed_data_df is None:
+        fetch_and_process_file()
+    
+    members_treeview.delete(*members_treeview.get_children())
+    name_filtered_df = preprocessed_data_df[preprocessed_data_df["name_lower"].str.contains(name.lower())]
+    process_data(name_filtered_df)
+        
+
+
+def member_search_name_update(stringvar):
+    global member_search_job_id
+
+    if member_search_job_id:
+        root.after_cancel(member_search_job_id)
+    member_search_job_id = root.after(800, lambda name=stringvar.get(): filter_by_member_name(name))        
+
+
+member_search_job_id = None
 last_log_time_processed = None
 max_hrs_7_days = None
 dollars_per_hour = None
@@ -272,9 +293,13 @@ button_frame.pack(side=tk.TOP, padx=10, pady=10)
 file_button = ctk.CTkButton(button_frame, text="Select file", command=fetch_and_process_file)
 file_button.pack(side=tk.LEFT, padx=(0, 10))
 
+member_search_last_update = datetime.now()
+member_search_sv = ctk.StringVar()
+member_search_sv.trace("w", lambda name, index, mode, sv=member_search_sv: member_search_name_update(sv))
 member_search_entry = ctk.CTkEntry(button_frame, corner_radius=5,
                                    placeholder_text="Search member",
-                                   placeholder_text_color="lightgray")
+                                   placeholder_text_color="lightgray",
+                                   textvariable=member_search_sv)
 member_search_entry.pack(side=tk.LEFT, padx=(0, 10))
 
 options_button = ctk.CTkButton(button_frame, text="Options", width=100)
