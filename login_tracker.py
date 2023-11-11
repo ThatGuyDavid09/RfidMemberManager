@@ -240,6 +240,10 @@ def on_key_press(key):
 
     try:
         key = key.char
+
+        if key.isalpha():
+            currently_pressed_keys = ""
+
         if not key.isdigit():
             return
         currently_pressed_keys += key
