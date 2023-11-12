@@ -55,20 +55,27 @@ def add_member_to_treeview(member_info):
         day_id = top_level_id + f"_{day["day"].strftime(r"%d%m%y")}"
 
         hours_for_day = sum([round((time[1] - time[0]).total_seconds() / 3600) for time in day["times"] if type(time[1]) != str])
-        day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {hours_for_day} hours * ${dollars_per_hour} = {hours_for_day * dollars_per_hour}"
+        day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {hours_for_day} hours * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
 
         members_treeview.insert(top_level_id, "end", day_id, text=day_text)
         for start, end in day["times"]:
             time_id = day_id + f"_{start.strftime(r"%H%M%S")}"
             duration = None if type(end) == str else end - start
             duration_hours = None if duration is None else round(duration.total_seconds() / 3600)
-            total_duration_hours += duration_hours if duration_hours else 0
+            # total_duration_hours += duration_hours if duration_hours else 0
             dur_text = "" if duration is None else f": {duration_hours} hours * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
             text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
             members_treeview.insert(day_id, "end", time_id, text=text)
     duration_id = top_level_id + "_total_dur"
-    members_treeview.insert(top_level_id, "end", duration_id,
-                            text=f"Total: {total_duration_hours} hours * ${dollars_per_hour} = {total_duration_hours * dollars_per_hour}")
+    total_duration_hours = member_info["duration"][0]
+    if member_info["duration"][1]:
+        members_treeview.insert(top_level_id, "end", duration_id + "1",
+                                text=f"More than max hours! Adjusted")
+        members_treeview.insert(top_level_id, "end", duration_id + "2",
+                                text=f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}")
+    else:
+        members_treeview.insert(top_level_id, "end", duration_id,
+                                text=f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}")
 
 
 def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
@@ -119,6 +126,9 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
         #     with open(log_file, "a", encoding="utf-8") as f:
         #         f.write(f"    {str(time_segment[0]).split()[-1]} - {str(time_segment[1]).split()[-1]}{duration_str}\n")
     # total_member_duration += duration_this_day
+
+    duration_this_day = timedelta(hours=round(duration_this_day.total_seconds() / 3600))
+
     if duration_this_day > timedelta(hours=8):
         warnings.append([member_name_lower, "More than 8 hours in one day"])
     # print(f"    Total duration this day: {duration_this_day.to_pytimedelta()}")
@@ -158,15 +168,14 @@ def process_member(member_df, member_name_lower):
         total_member_duration += dur_to_add
 
     weeks_duration = ((last_time - timedelta(1)) - last_log_time_processed).to_pytimedelta().days / 7
-    # FIXME this does not work
-    max_hours = timedelta(hours=weeks_duration * max_hrs_7_days)
+    max_hours = timedelta(hours=(weeks_duration * max_hrs_7_days) // 1)
 
     if total_member_duration > max_hours:
         warnings.append([member_name_lower, f"Exceeded max allowed hours for duration, reduced"])
         # print(f"Duration > max, adjusted duration: {max_hours}")
-        member_structure["duration"] = [max_hours, True]
+        member_structure["duration"] = [int(max_hours.total_seconds() // 3600), True]
     else:
-        member_structure["duration"] = [total_member_duration, False]
+        member_structure["duration"] = [int(total_member_duration.total_seconds() // 3600), False]
     return member_structure, warnings
 
     # total_dur_mem_string = f"  Total duration this member: {total_member_duration}"
@@ -201,11 +210,18 @@ def process_member(member_df, member_name_lower):
     #         f.write("-" * len(total_dur_mem_string) + "\n")
 
 
+def check_member_tree_populated():
+    if not members_treeview.get_children():
+        members_treeview.insert("", "end", text="No logs found for this timeframe!")
+
+
 def process_data(data_df):
     warnings = []
     all_members = []
 
     data_df = get_only_current_data(data_df)
+
+    clear_member_tree()
 
     for member_name_lower in data_df.name_lower.unique():
         member_df = data_df[data_df.name_lower == member_name_lower]
@@ -213,6 +229,11 @@ def process_data(data_df):
         all_members.append(member_structure)
         warnings.extend(warning_member)
         add_member_to_treeview(member_structure)
+    check_member_tree_populated()
+
+
+def clear_member_tree():
+    members_treeview.delete(*members_treeview.get_children())
 
 
 def preprocess_data(df):
@@ -227,6 +248,7 @@ def preprocess_data(df):
 
 def fetch_and_process_file():
     file_path = browse_files()
+    setup_member_treeview_heading()
     members_df = pd.read_csv(file_path)
     members_df = preprocess_data(members_df)
     process_data(members_df)
@@ -264,7 +286,7 @@ def filter_by_member_name(name=""):
     if preprocessed_data_df is None:
         fetch_and_process_file()
     
-    members_treeview.delete(*members_treeview.get_children())
+    clear_member_tree()
     name_filtered_df = preprocessed_data_df[preprocessed_data_df["name_lower"].str.contains(name.lower())]
     process_data(name_filtered_df)        
 
@@ -359,15 +381,11 @@ options_button.pack(side=tk.LEFT, padx=(0, 10))
 confirm_button = ctk.CTkButton(button_frame, text="Confirm", width=100)
 confirm_button.pack(side=tk.LEFT)
 
-# TODO fix this, indentation no worky
-# style = ttk.Style()
-# style.configure("Treeview",  indent=100)
-
 members_treeview = ttk.Treeview(root, height=20)
 # members_treeview.heading("log_time", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")}")
 # members_treeview.column("log_time", width=400, stretch=tk.YES)
 
-setup_member_treeview_heading()
+members_treeview.heading("#0", text="Please select file")
 members_treeview.column("#0", width=400, stretch=tk.YES)
 # members_treeview.insert('', 'end', '1234', text='Widget Tour')
 # members_treeview.insert("widgets", 'end', 'widgets2', text='child')
