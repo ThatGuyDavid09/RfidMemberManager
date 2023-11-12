@@ -349,10 +349,11 @@ def output_log():
                 f.write(
                     " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
         f.write("\n")
+        f.write("To credit by member:\n")
         for member in all_members:
             duration = member["duration"][0]
             f.write(
-                f"To credit {string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
+                " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
         f.write("-" * 60 + "\n\n")
 
 
@@ -362,10 +363,39 @@ def save_last_log():
     config.config.write(open("config.ini", "w"))
 
 
+def open_confirm_window():
+    def close_confirm_window():
+        confirm_window.destroy()
+        root.destroy()
+        sys.exit()
+
+    confirm_window = ctk.CTkToplevel(root)
+    confirm_window.title("Confirm")
+
+    ctk.CTkLabel(confirm_window, text="Hours confirmed, log outputted to credit_logs/credit_log.txt").pack(padx=10, pady=10)
+
+    confirm_treevew = ttk.Treeview(confirm_window, height=20)
+    confirm_treevew.heading("#0", text="Member payment summary")
+    confirm_treevew.column("#0", width=400, stretch=tk.YES)
+    confirm_treevew.pack(pady=10, padx=10)
+
+    for member in all_members:
+        duration = member["duration"][0]
+        confirm_treevew.insert("", "end", text=f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}")
+
+    ctk.CTkButton(confirm_window, text="OK", width=100, command=close_confirm_window).pack(pady=10)
+
+    confirm_window.protocol("WM_DELETE_WINDOW", close_confirm_window)
+    confirm_window.attributes('-topmost', True)
+    confirm_window.update()
+    confirm_window.attributes('-topmost', False)
+    confirm_window.focus()
+
+
 def confirm():
     output_log()
     save_last_log()
-    sys.exit()
+    open_confirm_window()
 
 
 class OptionsMenu(tk.Tk):
