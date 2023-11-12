@@ -1,4 +1,6 @@
+import os
 import string
+import sys
 import tkinter as tk
 import tkcalendar
 from tkinter import simpledialog
@@ -47,6 +49,8 @@ Takes the following format as member_info
   "duration": (dur_hours, adjusted (T/F))
 }
 """
+
+
 def add_member_to_treeview(member_info):
     top_level_id = member_info["name"].lower().replace(" ", "_")
     members_treeview.insert("", "end", top_level_id, text=string.capwords(member_info["name"]))
@@ -54,7 +58,8 @@ def add_member_to_treeview(member_info):
     for day in member_info["days"]:
         day_id = top_level_id + f"_{day["day"].strftime(r"%d%m%y")}"
 
-        hours_for_day = sum([round((time[1] - time[0]).total_seconds() / 3600) for time in day["times"] if type(time[1]) != str])
+        hours_for_day = sum(
+            [round((time[1] - time[0]).total_seconds() / 3600) for time in day["times"] if type(time[1]) != str])
         day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {hours_for_day} hours * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
 
         members_treeview.insert(top_level_id, "end", day_id, text=day_text)
@@ -86,7 +91,7 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
         "day": last_time,
         "times": []
     }
-    
+
     if sorted_logins_df.empty:
         last_time = last_time + timedelta(1)
         return last_time, timedelta(0), day_struct, warnings
@@ -119,18 +124,10 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
         duration_this_day += time_segment[2] if time_segment[2] != -1 else pd.Timedelta(0)
         day_struct["times"].append(time_segment[:2])
 
-        # duration_str = f": duration {time_segment[2].to_pytimedelta()}" if time_segment[2] != -1 else ""
-        # if not log:
-        #     print(f"    {str(time_segment[0]).split()[-1]} - {str(time_segment[1]).split()[-1]}{duration_str}")
-        # else:
-        #     with open(log_file, "a", encoding="utf-8") as f:
-        #         f.write(f"    {str(time_segment[0]).split()[-1]} - {str(time_segment[1]).split()[-1]}{duration_str}\n")
-    # total_member_duration += duration_this_day
-
     duration_this_day = timedelta(hours=round(duration_this_day.total_seconds() / 3600))
 
     if duration_this_day > timedelta(hours=8):
-        warnings.append([member_name_lower, "More than 8 hours in one day"])
+        warnings.append([member_name_lower, f"{last_time.strftime("%m/%d/%y")} - More than 8 hours in one day"])
     # print(f"    Total duration this day: {duration_this_day.to_pytimedelta()}")
 
     last_time = last_time + timedelta(1)
@@ -161,7 +158,8 @@ def process_member(member_df, member_name_lower):
             (member_df.login_time > last_time) & (member_df.login_time <= last_time + timedelta(1))]
         member_df_time_sorted = member_df_time_sorted.sort_values(by="login_time", ascending=True)
 
-        last_time, dur_to_add, day_struct, warning_member = process_day_for_member(member_df_time_sorted, last_time, member_name_lower)
+        last_time, dur_to_add, day_struct, warning_member = process_day_for_member(member_df_time_sorted, last_time,
+                                                                                   member_name_lower)
         warnings.extend(warning_member)
         if day_struct["times"]:
             member_structure["days"].append(day_struct)
@@ -215,13 +213,28 @@ def check_member_tree_populated():
         members_treeview.insert("", "end", text="No logs found for this timeframe!")
 
 
+def populate_warnings_tree(warnings):
+    for warning in warnings:
+        warnings_treeview.insert("", "end", text=f"{string.capwords(warning[0])}: {warning[1]}")
+
+
+def process_all(data_df):
+    global all_members
+
+    clear_tree(members_treeview)
+    clear_tree(warnings_treeview)
+    warnings, members = process_data(data_df)
+    check_member_tree_populated()
+    populate_warnings_tree(warnings)
+
+    all_members = members
+
+
 def process_data(data_df):
     warnings = []
     all_members = []
 
     data_df = get_only_current_data(data_df)
-
-    clear_member_tree()
 
     for member_name_lower in data_df.name_lower.unique():
         member_df = data_df[data_df.name_lower == member_name_lower]
@@ -229,11 +242,11 @@ def process_data(data_df):
         all_members.append(member_structure)
         warnings.extend(warning_member)
         add_member_to_treeview(member_structure)
-    check_member_tree_populated()
+    return warnings, all_members
 
 
-def clear_member_tree():
-    members_treeview.delete(*members_treeview.get_children())
+def clear_tree(tree):
+    tree.delete(*tree.get_children())
 
 
 def preprocess_data(df):
@@ -251,7 +264,7 @@ def fetch_and_process_file():
     setup_member_treeview_heading()
     members_df = pd.read_csv(file_path)
     members_df = preprocess_data(members_df)
-    process_data(members_df)
+    process_all(members_df)
 
 
 def browse_files():
@@ -280,15 +293,17 @@ def init_config():
     # print(last_log_time_processed)
     return config
 
+
 member_search_job_id = None
 member_search_last_update = datetime.now()
+
+
 def filter_by_member_name(name=""):
     if preprocessed_data_df is None:
         fetch_and_process_file()
-    
-    clear_member_tree()
+
     name_filtered_df = preprocessed_data_df[preprocessed_data_df["name_lower"].str.contains(name.lower())]
-    process_data(name_filtered_df)        
+    process_all(name_filtered_df)
 
 
 def member_search_name_update(stringvar):
@@ -296,11 +311,61 @@ def member_search_name_update(stringvar):
 
     if member_search_job_id:
         root.after_cancel(member_search_job_id)
-    member_search_job_id = root.after(800, lambda name=stringvar.get(): filter_by_member_name(name))        
+    member_search_job_id = root.after(800, lambda name=stringvar.get(): filter_by_member_name(name))
 
 
 def setup_member_treeview_heading():
     members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")}")
+
+
+def output_log():
+    os.makedirs('credit_logs', exist_ok=True)
+    with open(f"credit_logs/credit_log.txt", "a", encoding="utf-8") as f:
+        f.write(f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+
+        for member in all_members:
+            f.write(string.capwords(member["name"]) + "\n")
+            total_duration_hours = 0
+            for day in member["days"]:
+                hours_for_day = sum(
+                    [round((time[1] - time[0]).total_seconds() / 3600) for time in day["times"] if
+                     type(time[1]) != str])
+                day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {hours_for_day} hours * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
+                f.write(" " * 4 + day_text + "\n")
+
+                for start, end in day["times"]:
+                    duration = None if type(end) == str else end - start
+                    duration_hours = None if duration is None else round(duration.total_seconds() / 3600)
+                    # total_duration_hours += duration_hours if duration_hours else 0
+                    dur_text = "" if duration is None else f": {duration_hours} hours * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
+                    time_text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
+                    f.write(" " * 8 + time_text + "\n")
+            total_duration_hours = member["duration"][0]
+            if member["duration"][1]:
+                f.write(" " * 4 + f"More than max hours! Adjusted\n")
+                f.write(
+                    " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+            else:
+                f.write(
+                    " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+        f.write("\n")
+        for member in all_members:
+            duration = member["duration"][0]
+            f.write(
+                f"To credit {string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
+        f.write("-" * 60 + "\n\n")
+
+
+def save_last_log():
+    latest_date = pd.to_datetime(preprocessed_data_df["login_time"].max().strftime(r"%m/%d/%y"))
+    config.config["DEFAULT"]["LastLogTimeProcessed"] = str(latest_date)
+    config.config.write(open("config.ini", "w"))
+
+
+def confirm():
+    output_log()
+    save_last_log()
+    sys.exit()
 
 
 class OptionsMenu(tk.Tk):
@@ -316,7 +381,7 @@ class OptionsMenu(tk.Tk):
 
         tk.Label(self, text="Earliest Log to Process:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
         # tk.Button(self, text="Select Date", command=self.select_date).grid(row=1, column=1, padx=10, pady=5)
-        self.earliest_log_date = tkcalendar.DateEntry(self, selectmode='day', 
+        self.earliest_log_date = tkcalendar.DateEntry(self, selectmode='day',
                                                       year=last_log_time_processed.year,
                                                       month=last_log_time_processed.month,
                                                       day=last_log_time_processed.day)
@@ -356,6 +421,7 @@ login_type_tag_to_search = None
 config = init_config()
 
 preprocessed_data_df = None
+all_members = []
 
 ctk.set_appearance_mode("light")
 root = ctk.CTk()
@@ -378,7 +444,7 @@ member_search_entry.pack(side=tk.LEFT, padx=(0, 10))
 options_button = ctk.CTkButton(button_frame, text="Options", width=100, command=OptionsMenu)
 options_button.pack(side=tk.LEFT, padx=(0, 10))
 
-confirm_button = ctk.CTkButton(button_frame, text="Confirm", width=100)
+confirm_button = ctk.CTkButton(button_frame, text="Confirm", width=100, command=confirm)
 confirm_button.pack(side=tk.LEFT)
 
 members_treeview = ttk.Treeview(root, height=20)
@@ -392,6 +458,8 @@ members_treeview.column("#0", width=400, stretch=tk.YES)
 members_treeview.pack(pady=10)
 
 warnings_treeview = ttk.Treeview(root, height=5)
+warnings_treeview.heading("#0", text="Warnings")
+warnings_treeview.column("#0", width=400, stretch=tk.YES)
 warnings_treeview.pack(pady=10)
 
 # add_member_to_treeview(example_member)

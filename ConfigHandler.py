@@ -29,4 +29,3 @@ class ConfigHandler:
             requested = requested[elem]
         
         return requested
-
