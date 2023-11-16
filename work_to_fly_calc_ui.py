@@ -46,6 +46,7 @@ Takes the following format as member_info
       ),...
     }
   ),...
+  "residuals": timedelta,
   "duration": (dur_hours, adjusted (T/F))
 }
 """
@@ -71,6 +72,7 @@ def add_member_to_treeview(member_info):
             dur_text = "" if duration is None else f": {duration_hours} hours * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
             text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
             members_treeview.insert(day_id, "end", time_id, text=text)
+    
     duration_id = top_level_id + "_total_dur"
     total_duration_hours = member_info["duration"][0]
     if member_info["duration"][1]:
@@ -86,6 +88,7 @@ def add_member_to_treeview(member_info):
 def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
     logged_times = []
     warnings = []
+    residuals = timedelta(0)
 
     day_struct = {
         "day": last_time,
@@ -97,14 +100,6 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
         return last_time, timedelta(0), day_struct, warnings
 
     start_time = None
-    # member_df_time_sorted.sort_values(by="login_time", ascending=True)
-    # print(member_df_time_sorted.login_time.dtype)
-    # print(member_df_time_sorted)
-    # if not log:
-    #     print(f"  Logs on {last_time.date()}")
-    # else:
-    #     with open(log_file, "a", encoding="utf-8") as f:
-    #         f.write(f"  Logs on {last_time.date()}\n")
 
     for _, row in sorted_logins_df.iterrows():
         if not start_time:
@@ -114,6 +109,7 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
             logged_times.append(logged_time)
             start_time = None
 
+    # If we have a leftover login that was not matched with an ending time
     if start_time:
         logged_time = [start_time, "NTBM", -1]
         logged_times.append(logged_time)
@@ -175,37 +171,6 @@ def process_member(member_df, member_name_lower):
     else:
         member_structure["duration"] = [int(total_member_duration.total_seconds() // 3600), False]
     return member_structure, warnings
-
-    # total_dur_mem_string = f"  Total duration this member: {total_member_duration}"
-    # if not log:
-    #     print(total_dur_mem_string)
-    #
-    #     if total_member_duration > max_hours:
-    #         warning_members.append([member_name_lower, f"Exceeded max allowed hours for duration, reduced"])
-    #         print(f"Duration > max, adjusted duration: {max_hours}")
-    #         member_durations.append([member_name_lower, max_hours])
-    #     else:
-    #         member_durations.append([member_name_lower, total_member_duration])
-    # else:
-    #     with open(log_file, "a", encoding="utf-8") as f:
-    #         f.write(total_dur_mem_string + "\n")
-    #         if total_member_duration > max_hours:
-    #             total_member_duration = max_hours
-    #             f.write(f"Duration > max, adjusted duration: {max_hours}\n")
-    #
-    #         final_dur = timedelta(0)
-    #         for name, dur in member_durations:
-    #             if name == member_name_lower:
-    #                 final_dur = dur
-    #                 if dur != total_member_duration:
-    #                     f.write(f"Duration manually adjusted, final {dur}\n")
-    #         f.write(f"Credited ${calculate_to_credit(final_dur)}\n")
-    #
-    # if not log:
-    #     print("-" * len(total_dur_mem_string))
-    # else:
-    #     with open(log_file, "a", encoding="utf-8") as f:
-    #         f.write("-" * len(total_dur_mem_string) + "\n")
 
 
 def check_member_tree_populated():
