@@ -4,3 +4,4 @@ pandas
 packaging
 pynput
 Pillow
+winsound
