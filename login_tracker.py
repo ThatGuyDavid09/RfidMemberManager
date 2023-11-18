@@ -212,8 +212,8 @@ def log_entry(event=None, rfid_id=None):
 
             # All members are assumed to be logging in for general reasons. People who are in the work to fly program
             # have a special scanner, and their name has " (work)" added onto the end. This detects that.
-            if "(work)" in member_name:
-                member_name = member_name.replace("(work)", "").strip()
+            if r"(work)" in member_name:
+                member_name = member_name.replace(r"(work)", "").strip()
                 save_entry(rfid_id, member_name, reason="work to fly")
             else:
                 save_entry(rfid_id, member_name, reason="general")
