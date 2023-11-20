@@ -74,7 +74,7 @@ def add_member_to_treeview(member_info):
             time_id = day_id + f"_{start.strftime(r"%H%M%S")}"
             duration = None if end == "NTBM" else end - start
             duration_hours = None if duration is None else round(duration.total_seconds() / 3600)
-            dur_text = "" if duration is None else f": {duration_hours} hours * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
+            dur_text = "" if duration is None else f" | {duration_hours} hours * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
             
             # Format example: 10:23:12 - 11:52:53: 2 hours * $16 = $32
             # If NTBM: 10:23:12 - NTBM

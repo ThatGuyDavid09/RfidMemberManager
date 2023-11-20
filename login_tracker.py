@@ -140,7 +140,7 @@ def open_empty_member_log_window(rfid_id):
     log_button = ctk.CTkButton(empty_member_window, text="Save", command=save_empty_member_entry)
     log_button.pack(pady=10)
 
-    # empty_member_window.protocol("WM_DELETE_WINDOW", save_empty_member_entry)
+    # empty_member_window.protocol("WM_DELETE_WINDOW", )
     empty_member_window.attributes('-topmost', True)
     empty_member_window.update()
     empty_member_window.attributes('-topmost', False)
