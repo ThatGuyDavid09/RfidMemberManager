@@ -160,10 +160,10 @@ def process_data(data_df, last_login_time):
         all_members.append(member_structure)
     return all_members
 
-port = 465  # For SSL
+port = 465 
 smtp_server = "smtp.gmail.com"
-sender_email = "skininthegame@flightclub502.org"  # Enter your address
-receiver_email = "karen.harrell@flightclub502.org"  # Enter receiver address
+sender_email = "skininthegame@flightclub502.org" 
+receiver_email = "karen.harrell@flightclub502.org"
 password = "Skininthegame#502!"
 
 init_config()
