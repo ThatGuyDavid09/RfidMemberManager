@@ -10,9 +10,9 @@ from ConfigHandler import ConfigHandler
 last_log_time_processed = None
 # Account for differing end of month times
 today = datetime.today()
-if today.day >= 28: # Task run at the end of the month
-    last_log_time_processed = (today - timedelta(weeks=4)).replace(day=15).date()
-else: # Task run on the first
+if today.day >= 28: # Task run at the end of the month, need every day since the 15th, inclusive
+    last_log_time_processed = today.replace(day=15).date()
+else: # Task run on the 15th, need every day since last day of last month, inclusive
     last_log_time_processed = (today.replace(day=1) - timedelta(days=1)).date()
 
 # last_log_time_processed = datetime.today().date() - timedelta(weeks=2)
