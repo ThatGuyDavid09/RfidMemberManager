@@ -7,7 +7,15 @@ import smtplib, ssl
 
 from ConfigHandler import ConfigHandler
 
-last_log_time_processed = datetime.today().date() - timedelta(weeks=2)
+last_log_time_processed = None
+# Account for differing end of month times
+today = datetime.today()
+if today.day >= 28: # Task run at the end of the month
+    last_log_time_processed = (today - timedelta(weeks=4)).replace(day=15).date()
+else: # Task run on the first
+    last_log_time_processed = (today.replace(day=1) - timedelta(days=1)).date()
+
+# last_log_time_processed = datetime.today().date() - timedelta(weeks=2)
 last_log_time_processed_str = last_log_time_processed.strftime(r"%d/%m/%y")
 max_hrs_7_days = None
 dollars_per_hour = None
