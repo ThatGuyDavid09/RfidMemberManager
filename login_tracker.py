@@ -111,10 +111,8 @@ def open_empty_member_log_window(rfid_id):
     """
     Opens a window to ask for name of unknown member. Plays sound to let user know there was an error.
     """
-    # Sleeps to let scanner sound play
-    time.sleep(0.2)
-    # Makes windows error noise to get user's attention
-    winsound.PlaySound("SystemHand", winsound.SND_ALIAS | winsound.SND_ASYNC)
+    # Makes windows error noise to get user's attention, sleeps to let scanner sound play
+    root.after(200, lambda: winsound.PlaySound("SystemHand", winsound.SND_ALIAS | winsound.SND_ASYNC))
 
     def save_empty_member_entry(event=None):
         """
@@ -223,6 +221,9 @@ def save_entry(rfid_id, member_name=None, member_id=-1, reason="unknown"):
     """
     Saves an entry into the log file and adds it to the treeview.
     """
+    # Plays OK sound to let user know log is confirmed, waits to let scanner play
+    root.after(200, lambda: winsound.PlaySound("SystemDefault", winsound.SND_ALIAS | winsound.SND_ASYNC))
+
     if member_name is None:
         member_name = "UNKNOWN"
 
