@@ -84,19 +84,19 @@ def open_add_member_window():
     first_name_label = ctk.CTkLabel(add_member_window, text="First Name:")
     first_name_label.pack()
     first_name_entry = ctk.CTkEntry(add_member_window)
-    first_name_entry.pack()
+    first_name_entry.pack(padx=10)
 
     global last_name_entry
     last_name_label = ctk.CTkLabel(add_member_window, text="Last Name:")
     last_name_label.pack()
     last_name_entry = ctk.CTkEntry(add_member_window)
-    last_name_entry.pack()
+    last_name_entry.pack(padx=10)
 
     global rfid_member_entry
     rfid_label = ctk.CTkLabel(add_member_window, text="Scan RFID Tag:")
     rfid_label.pack()
     rfid_member_entry = ctk.CTkEntry(add_member_window)
-    rfid_member_entry.pack()
+    rfid_member_entry.pack(padx=10)
 
     add_member_button = ctk.CTkButton(add_member_window, text="Add Member", command=close_add_member_window)
     add_member_button.pack(pady=10)
