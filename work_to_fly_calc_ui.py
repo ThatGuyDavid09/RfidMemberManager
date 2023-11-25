@@ -34,6 +34,16 @@ example_member = {
     )
 }
 
+def get_display_text_and_hours(seconds):
+    if seconds is None:
+        return "NTBM", 0
+
+    hours = round(seconds / 3600)
+    if hours > 0:
+        return (f"{hours} hour" + ("" if hours == 1 else "s")), hours
+    else:
+        minutes = round(seconds / 60)
+        return (f"{minutes} minute" + ("" if minutes == 1 else "s")), 0
 
 def add_member_to_treeview(member_info):
     """
@@ -64,17 +74,19 @@ def add_member_to_treeview(member_info):
 
         # This is for display only, and reads 0 if less than 30 mins of work was performed that day. Actual duration is
         # only rounded at the very end of processing
-        hours_for_day = sum(
-            [round((time[1] - time[0]).total_seconds() / 3600) for time in day["times"] if time[1] != "NTBM"])
+        seconds_for_day = sum(
+            [(time[1] - time[0]).total_seconds() for time in day["times"] if time[1] != "NTBM"])
+        time_text, hours = get_display_text_and_hours(seconds_for_day)
         # Format example: 11/12/23 - 3 hours * $16 = $48 
-        day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {hours_for_day} hours * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
+        day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {time_text} * ${dollars_per_hour} = ${hours * dollars_per_hour}"
 
         members_treeview.insert(top_level_id, "end", day_id, text=day_text)
         for start, end in day["times"]:
             time_id = day_id + f"_{start.strftime(r"%H%M%S")}"
             duration = None if end == "NTBM" else end - start
-            duration_hours = None if duration is None else round(duration.total_seconds() / 3600)
-            dur_text = "" if duration is None else f" | {duration_hours} hours * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
+            duration_seconds = None if duration is None else duration.total_seconds()
+            time_text, duration_hours = get_display_text_and_hours(duration_seconds)
+            dur_text = "" if duration is None else f" | {time_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
             
             # Format example: 10:23:12 - 11:52:53: 2 hours * $16 = $32
             # If NTBM: 10:23:12 - NTBM
@@ -368,16 +380,18 @@ def output_log():
             total_duration_hours = 0
             for day in member["days"]:
                 # For display only.
-                hours_for_day = sum(
-                    [round((time[1] - time[0]).total_seconds() / 3600) for time in day["times"] if
+                seconds_for_day = sum(
+                    [(time[1] - time[0]).total_seconds() for time in day["times"] if
                      type(time[1]) != str])
-                day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {hours_for_day} hours * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
+                time_text, hours_for_day = get_display_text_and_hours(seconds_for_day)
+                day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {time_text} * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
                 f.write(" " * 4 + day_text + "\n")
 
                 for start, end in day["times"]:
                     duration = None if type(end) == str else end - start
-                    duration_hours = None if duration is None else round(duration.total_seconds() / 3600)
-                    dur_text = "" if duration is None else f": {duration_hours} hours * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
+                    duration_seconds = None if duration is None else round(duration.total_seconds() / 3600)
+                    sub_dur_text, duration_hours = get_display_text_and_hours(duration_seconds)
+                    dur_text = "" if duration is None else f": {sub_dur_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
                     time_text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
                     f.write(" " * 8 + time_text + "\n")
             total_duration_hours = member["duration"][0]
