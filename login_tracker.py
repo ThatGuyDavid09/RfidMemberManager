@@ -111,8 +111,12 @@ def open_empty_member_log_window(rfid_id):
     """
     Opens a window to ask for name of unknown member. Plays sound to let user know there was an error.
     """
+    def play_fail_noise():
+        winsound.Beep(600, 400)
+        winsound.Beep(440, 400)
     # Makes windows error noise to get user's attention, sleeps to let scanner sound play
-    root.after(200, lambda: winsound.PlaySound("SystemHand", winsound.SND_ALIAS | winsound.SND_ASYNC))
+    # root.after(200, lambda: winsound.PlaySound("SystemHand", winsound.SND_ALIAS | winsound.SND_ASYNC))
+    root.after(300, play_fail_noise)
 
     def save_empty_member_entry(event=None):
         """
@@ -221,8 +225,12 @@ def save_entry(rfid_id, member_name=None, member_id=-1, reason="unknown"):
     """
     Saves an entry into the log file and adds it to the treeview.
     """
+    def play_ok_noise():
+        winsound.Beep(440, 400)
+        winsound.Beep(600, 400)
     # Plays OK sound to let user know log is confirmed, waits to let scanner play
-    root.after(200, lambda: winsound.PlaySound("SystemDefault", winsound.SND_ALIAS | winsound.SND_ASYNC))
+    # root.after(200, lambda: winsound.PlaySound("SystemDefault", winsound.SND_ALIAS | winsound.SND_ASYNC))
+    root.after(200, play_ok_noise)
 
     if member_name is None:
         member_name = "UNKNOWN"
@@ -232,6 +240,9 @@ def save_entry(rfid_id, member_name=None, member_id=-1, reason="unknown"):
     member_data = (member_name, current_datetime, reason)
     recent_entries_tree.insert("", 0, values=member_data)
     # rfid_entry.delete(0, "end")
+    if member_name.lower() == "test":
+        return
+
     with open("data/login_log.csv", "a", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([member_name, member_name.lower(), rfid_id, member_id, current_datetime, reason.lower()])
