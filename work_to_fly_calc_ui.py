@@ -388,8 +388,8 @@ def output_log():
                 f.write(" " * 4 + day_text + "\n")
 
                 for start, end in day["times"]:
-                    duration = None if type(end) == str else end - start
-                    duration_seconds = None if duration is None else round(duration.total_seconds() / 3600)
+                    duration = None if end == "NTBM" else end - start
+                    duration_seconds = None if duration is None else duration.total_seconds()
                     sub_dur_text, duration_hours = get_display_text_and_hours(duration_seconds)
                     dur_text = "" if duration is None else f": {sub_dur_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
                     time_text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text

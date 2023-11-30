@@ -2,6 +2,7 @@ from email.mime.text import MIMEText
 import string
 import pandas as pd
 from datetime import datetime, timedelta
+import os
 
 import smtplib, ssl
 
@@ -160,6 +161,62 @@ def process_data(data_df, last_login_time):
         all_members.append(member_structure)
     return all_members
 
+
+def get_display_text_and_hours(seconds):
+    if seconds is None:
+        return "NTBM", 0
+
+    hours = round(seconds / 3600)
+    if hours > 0:
+        return (f"{hours} hour" + ("" if hours == 1 else "s")), hours
+    else:
+        minutes = round(seconds / 60)
+        return (f"{minutes} minute" + ("" if minutes == 1 else "s")), 0
+
+
+def output_log(all_members):
+    """
+    Outputs a log file based on all_members.
+    """
+    os.makedirs('credit_logs', exist_ok=True)
+    with open(f"credit_logs/credit_log.txt", "a", encoding="utf-8") as f:
+        f.write(f"Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+
+        for member in all_members:
+            f.write(string.capwords(member["name"]) + "\n")
+            total_duration_hours = 0
+            for day in member["days"]:
+                # For display only.
+                seconds_for_day = sum(
+                    [(time[1] - time[0]).total_seconds() for time in day["times"] if
+                     type(time[1]) != str])
+                time_text, hours_for_day = get_display_text_and_hours(seconds_for_day)
+                day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {time_text} * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
+                f.write(" " * 4 + day_text + "\n")
+
+                for start, end in day["times"]:
+                    duration = None if end == "NTBM" else end - start
+                    duration_seconds = None if duration is None else duration.total_seconds()
+                    sub_dur_text, duration_hours = get_display_text_and_hours(duration_seconds)
+                    dur_text = "" if duration is None else f": {sub_dur_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
+                    time_text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
+                    f.write(" " * 8 + time_text + "\n")
+            total_duration_hours = member["duration"][0]
+            if member["duration"][1]:
+                f.write(" " * 4 + f"More than max hours! Adjusted\n")
+                f.write(
+                    " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+            else:
+                f.write(
+                    " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+        f.write("\n")
+        f.write("To credit by member:\n")
+        for member in all_members:
+            duration = member["duration"][0]
+            f.write(
+                " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
+        f.write("-" * 60 + "\n\n")
+
 port = 465 
 smtp_server = "smtp.gmail.com"
 sender_email = "skininthegame@flightclub502.org" 
@@ -189,3 +246,4 @@ context = ssl.create_default_context()
 with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
     server.login(sender_email, password)
     server.sendmail(sender_email, receiver_email, msg.as_string())
+output_log(all_members)
