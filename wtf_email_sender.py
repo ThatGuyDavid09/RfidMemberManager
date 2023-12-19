@@ -235,13 +235,50 @@ print(f"[INFO {str(datetime.now())}] Data preprocessed")
 all_members = process_data(members_df, last_log_time_processed)
 print(f"[INFO {str(datetime.now())}] Data processed")
 
-message = f"Logs since {last_log_time_processed_str}\n"
+# message = f"Logs since {last_log_time_processed_str}\n"
 
-message += "To credit by member:\n"
+# message += "To credit by member:\n"
+# for member in all_members:
+#     duration = member["duration"][0]
+#     message += " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n"
+
+# Too lazy to make more customizable, just same as log file
+message = (f"Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+
+for member in all_members:
+    message += (string.capwords(member["name"]) + "\n")
+    total_duration_hours = 0
+    for day in member["days"]:
+        # For display only.
+        seconds_for_day = sum(
+            [(time[1] - time[0]).total_seconds() for time in day["times"] if
+                type(time[1]) != str])
+        time_text, hours_for_day = get_display_text_and_hours(seconds_for_day)
+        day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {time_text} * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
+        message += (" " * 4 + day_text + "\n")
+
+        for start, end in day["times"]:
+            duration = None if end == "NTBM" else end - start
+            duration_seconds = None if duration is None else duration.total_seconds()
+            sub_dur_text, duration_hours = get_display_text_and_hours(duration_seconds)
+            dur_text = "" if duration is None else f": {sub_dur_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
+            time_text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
+            message += (" " * 8 + time_text + "\n")
+    total_duration_hours = member["duration"][0]
+    if member["duration"][1]:
+        message += (" " * 4 + f"More than max hours! Adjusted\n")
+        message += (
+            " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+    else:
+        message += (
+            " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+message += ("\n")
+message += ("To credit by member:\n")
 for member in all_members:
     duration = member["duration"][0]
-    message += " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n"
-
+    message += (
+        " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
+message += ("-" * 60 + "\n\n")
 
 msg = MIMEText(message)
 msg['Subject'] = f"Skin in the game logs since {last_log_time_processed_str}"
