@@ -1,5 +1,6 @@
 /data
 /credit_logs
+/run_logs
 /__pycache__
 config.toml
 config.ini

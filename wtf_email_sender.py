@@ -32,6 +32,9 @@ def init_config():
     max_hrs_7_days = int(config.get_config_element("DEFAULT/MaxHoursPerWeek"))
     dollars_per_hour = int(config.get_config_element("DEFAULT/DollarsPerHour"))
     login_type_tag_to_search = str(config.get_config_element("DEFAULT/LoginSearchTypeTag")).lower()
+
+    print(f"[INFO {str(datetime.now())}] Config initalized")
+
     return config
 
 def get_only_current_data(data_df, last_login_time):
@@ -225,9 +228,12 @@ password = "Skininthegame#502!"
 
 init_config()
 
-members_df = pd.read_csv("data/login_log.csv")
+members_df = pd.read_csv(r"C:\Users\fligh\Documents\RfidMemberManager\data\login_log.csv")
+print(f"[INFO {str(datetime.now())}] Data loaded")
 members_df = preprocess_data(members_df)
+print(f"[INFO {str(datetime.now())}] Data preprocessed")
 all_members = process_data(members_df, last_log_time_processed)
+print(f"[INFO {str(datetime.now())}] Data processed")
 
 message = f"Logs since {last_log_time_processed_str}\n"
 
@@ -246,4 +252,7 @@ context = ssl.create_default_context()
 with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
     server.login(sender_email, password)
     server.sendmail(sender_email, receiver_email, msg.as_string())
+print(f"[INFO {str(datetime.now())}] Email sent")
 output_log(all_members)
+print(f"[INFO {str(datetime.now())}] Log outputted")
+print(f"--------------------")
