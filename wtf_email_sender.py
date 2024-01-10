@@ -22,6 +22,15 @@ max_hrs_7_days = None
 dollars_per_hour = None
 login_type_tag_to_search = None
 
+
+def check_log_file_size():
+    path = r"run_logs/wtf_email_run_log.txt"
+    file_size_mb = os.stat(path).st_size  / (1024 * 1024)
+    if file_size_mb > 50:
+        with open(path, "r") as f:
+            f.truncate()
+
+
 def init_config():
     """
     Loads configuration variables from file and sets them in global variables.
@@ -220,6 +229,7 @@ def output_log(all_members):
                 " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
         f.write("-" * 60 + "\n\n")
 
+check_log_file_size()
 port = 465 
 smtp_server = "smtp.gmail.com"
 sender_email = "skininthegame@flightclub502.org" 
