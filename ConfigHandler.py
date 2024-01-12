@@ -5,6 +5,17 @@ from typing import Any
 
 class ConfigHandler:
     def __init__(self):
+        self.defaults = {
+            "DEFAULT": {
+                "AdminRfidCode": -1,
+                "FlightCircleApiKey = -1,
+                "LastLogTimeProcessed": -1,
+                "MaxHoursPerWeek": 12,
+                "DollarsPerHour": 16,
+                "LoginSearchTypeTag": "work to fly"
+            }
+        }
+        
         if not os.path.exists("config.ini"):
             with open('config.ini', "w", encoding="utf-8") as f:
                 f.writelines([
@@ -26,6 +37,9 @@ class ConfigHandler:
         
         requested = self.config
         for elem in paths:
-            requested = requested[elem]
+            try:
+                requested = requested[elem]
+            except Exception:
+                requested = self.defaults[elem]
         
         return requested
