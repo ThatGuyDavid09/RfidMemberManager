@@ -233,7 +233,7 @@ check_log_file_size()
 port = 465 
 smtp_server = "smtp.gmail.com"
 sender_email = "skininthegame@flightclub502.org" 
-receiver_email = "karen.harrell@flightclub502.org"
+receiver_email = "liam.cantin@flightclub502.org"
 password = "Skininthegame#502!"
 
 init_config()
