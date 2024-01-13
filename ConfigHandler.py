@@ -13,7 +13,13 @@ class ConfigHandler:
                 "MaxHoursPerWeek": 12,
                 "DollarsPerHour": 16,
                 "LoginSearchTypeTag": "work to fly"
-            }
+            },
+             "AdminRfidCode": -1,
+            "FlightCircleApiKey": -1,
+            "LastLogTimeProcessed": -1,
+            "MaxHoursPerWeek": 12,
+            "DollarsPerHour": 16,
+            "LoginSearchTypeTag": "work to fly"
         }
         
         if not os.path.exists("config.ini"):
