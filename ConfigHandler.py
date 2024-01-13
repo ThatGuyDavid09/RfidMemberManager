@@ -8,7 +8,7 @@ class ConfigHandler:
         self.defaults = {
             "DEFAULT": {
                 "AdminRfidCode": -1,
-                "FlightCircleApiKey = -1,
+                "FlightCircleApiKey": -1,
                 "LastLogTimeProcessed": -1,
                 "MaxHoursPerWeek": 12,
                 "DollarsPerHour": 16,
