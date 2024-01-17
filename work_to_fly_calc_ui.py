@@ -286,6 +286,10 @@ def fetch_and_process_file():
     Prompts the user to select a file, sets up UI based on selection, reads data from file, and processes it.
     """
     file_path = browse_files()
+    process_file(file_path)
+
+
+def process_file(file_path):
     # If user does not select a file, this prevents an error
     try:
         members_df = pd.read_csv(file_path)
@@ -373,7 +377,7 @@ def output_log():
     """
     os.makedirs('credit_logs', exist_ok=True)
     with open(f"credit_logs/credit_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+        f.write(f"MANUAL Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
 
         for member in all_members:
             f.write(string.capwords(member["name"]) + "\n")
@@ -550,5 +554,9 @@ warnings_treeview = ttk.Treeview(root, height=5)
 warnings_treeview.heading("#0", text="Warnings")
 warnings_treeview.column("#0", width=400, stretch=tk.YES)
 warnings_treeview.pack(pady=10)
+
+# By default, select login_log
+process_file("data/login_log.csv")
+file_button.configure(text=f"Selected file: login_log.csv")
 
 root.mainloop()

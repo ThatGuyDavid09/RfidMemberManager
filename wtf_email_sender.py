@@ -253,7 +253,7 @@ print(f"[INFO {str(datetime.now())}] Data processed")
 #     message += " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n"
 
 # Too lazy to make more customizable, just same as log file
-message = (f"Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+message = (f"AUTO Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
 
 for member in all_members:
     message += (string.capwords(member["name"]) + "\n")
