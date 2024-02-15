@@ -32,7 +32,7 @@ def check_log_file_size():
             f.truncate()
 
 
-def init_config(config_file="config.ini"):
+def init_config(config_file):
     """
     Loads configuration variables from file and sets them in global variables.
     """
@@ -303,7 +303,6 @@ msg['From'] = sender_email
 msg['To'] = receiver_email
 if "general" in cfg_file:
     msg['Bcc'] = bcc_email
-    print("general")
 
 context = ssl.create_default_context()
 with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
