@@ -300,9 +300,11 @@ message += ("-" * 60 + "\n\n")
 msg = MIMEText(message)
 msg['Subject'] = f"Skin in the game logs since {last_log_time_processed_str}"
 msg['From'] = sender_email
-msg['To'] = receiver_email
+
 if "general" in cfg_file:
-    msg['Bcc'] = bcc_email
+    msg['To'] = bcc_email
+else:
+    msg['To'] = receiver_email
 
 context = ssl.create_default_context()
 with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
