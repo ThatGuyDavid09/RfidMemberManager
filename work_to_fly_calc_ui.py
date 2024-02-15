@@ -377,7 +377,7 @@ def output_log():
     """
     os.makedirs('credit_logs', exist_ok=True)
     with open(f"credit_logs/credit_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"MANUAL Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+        f.write(f"MANUAL Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
 
         for member in all_members:
             f.write(string.capwords(member["name"]) + "\n")

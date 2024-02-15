@@ -3,6 +3,7 @@ import string
 import pandas as pd
 from datetime import datetime, timedelta
 import os
+import sys
 
 import smtplib, ssl
 
@@ -31,13 +32,13 @@ def check_log_file_size():
             f.truncate()
 
 
-def init_config():
+def init_config(config_file="config.ini"):
     """
     Loads configuration variables from file and sets them in global variables.
     """
     global last_log_time_processed, max_hrs_7_days, dollars_per_hour, login_type_tag_to_search
 
-    config = ConfigHandler()
+    config = ConfigHandler(config_file)
     max_hrs_7_days = int(config.get_config_element("DEFAULT/MaxHoursPerWeek"))
     dollars_per_hour = int(config.get_config_element("DEFAULT/DollarsPerHour"))
     login_type_tag_to_search = str(config.get_config_element("DEFAULT/LoginSearchTypeTag")).lower()
@@ -192,7 +193,7 @@ def output_log(all_members):
     """
     os.makedirs('credit_logs', exist_ok=True)
     with open(f"credit_logs/credit_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"AUTO Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+        f.write(f"AUTO Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
 
         for member in all_members:
             f.write(string.capwords(member["name"]) + "\n")
@@ -234,9 +235,15 @@ port = 465
 smtp_server = "smtp.gmail.com"
 sender_email = "skininthegame@flightclub502.org" 
 receiver_email = "liam.cantin@flightclub502.org"
+bcc_email = "iman.ghali@flightclub502.org"
 password = "Skininthegame#502!"
 
-init_config()
+cfg_file = None
+if len(sys.argv) > 1:
+    cfg_file = sys.argv[1]
+else:
+    cfg_file = "config.ini"
+init_config(cfg_file)
 
 members_df = pd.read_csv(r"C:\Users\fligh\Documents\RfidMemberManager\data\login_log.csv")
 print(f"[INFO {str(datetime.now())}] Data loaded")
@@ -253,7 +260,7 @@ print(f"[INFO {str(datetime.now())}] Data processed")
 #     message += " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n"
 
 # Too lazy to make more customizable, just same as log file
-message = (f"AUTO Processed on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+message = (f"AUTO Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
 
 for member in all_members:
     message += (string.capwords(member["name"]) + "\n")
@@ -294,6 +301,9 @@ msg = MIMEText(message)
 msg['Subject'] = f"Skin in the game logs since {last_log_time_processed_str}"
 msg['From'] = sender_email
 msg['To'] = receiver_email
+if "general" in cfg_file:
+    msg['Bcc'] = bcc_email
+    print("general")
 
 context = ssl.create_default_context()
 with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:

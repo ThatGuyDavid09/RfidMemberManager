@@ -4,7 +4,7 @@ from typing import Any
 
 
 class ConfigHandler:
-    def __init__(self):
+    def __init__(self, config_file="config.ini"):
         self.defaults = {
             "DEFAULT": {
                 "AdminRfidCode": -1,
@@ -35,7 +35,7 @@ class ConfigHandler:
                 ])
 
         self.config = configparser.ConfigParser()
-        self.config.read("config.ini")
+        self.config.read(config_file)
     
     # Note that path should be segmented by a /, so "DEFAULT/Whatever"
     def get_config_element(self, path):
