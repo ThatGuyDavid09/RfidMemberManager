@@ -124,6 +124,11 @@ def open_empty_member_log_window(rfid_id):
         """
         name = unknown_member_name_entry.get()
 
+        # Capitalize name
+        name_lst = name.split()
+        name_lst = [i.strip().capitalize() for i in name_lst]
+        name = " ".join(name_lst)
+
         save_entry(rfid_id, name if name else "unknown", reason="general")
         empty_member_window.destroy()
 
