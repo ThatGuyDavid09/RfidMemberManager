@@ -490,6 +490,11 @@ class OptionsMenu(tk.Tk):
         self.dollars_per_hour.insert(0, dollars_per_hour)
         self.dollars_per_hour.grid(row=2, column=1, padx=10, pady=5)
 
+        tk.Label(self, text="Login type to search?:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        self.login_to_search = tk.Entry(self)
+        self.login_to_search.insert(0, login_type_tag_to_search)
+        self.login_to_search.grid(row=2, column=1, padx=10, pady=5)
+
         tk.Button(self, text="Confirm", command=self.save_changes).grid(row=3, column=0, columnspan=2, pady=10)
 
 
@@ -497,7 +502,7 @@ class OptionsMenu(tk.Tk):
         """
         Retrieve user settings from the associated entries at set into global variables. Also reprocesses data.
         """
-        global max_hrs_7_days, last_log_time_processed, dollars_per_hour
+        global max_hrs_7_days, last_log_time_processed, dollars_per_hour, login_type_tag_to_search
 
         max_hrs_7_days = int(self.max_hours_per_week.get())
         # Needed to allow proper processing by strptime
@@ -505,6 +510,7 @@ class OptionsMenu(tk.Tk):
         last_log_time_processed = datetime.strptime(date_str, r"%m/%d/%y")
         setup_member_treeview_heading()
         dollars_per_hour = int(self.dollars_per_hour.get())
+        login_type_tag_to_search = self.login_to_search.lower()
 
         filter_by_member_name()
 
