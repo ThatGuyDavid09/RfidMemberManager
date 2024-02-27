@@ -34,6 +34,7 @@ example_member = {
     )
 }
 
+
 def get_display_text_and_hours(seconds):
     if seconds is None:
         return "NTBM", 0
@@ -44,6 +45,7 @@ def get_display_text_and_hours(seconds):
     else:
         minutes = round(seconds / 60)
         return (f"{minutes} minute" + ("" if minutes == 1 else "s")), 0
+
 
 def add_member_to_treeview(member_info):
     """
@@ -87,12 +89,12 @@ def add_member_to_treeview(member_info):
             duration_seconds = None if duration is None else duration.total_seconds()
             time_text, duration_hours = get_display_text_and_hours(duration_seconds)
             dur_text = "" if duration is None else f" | {time_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
-            
+
             # Format example: 10:23:12 - 11:52:53: 2 hours * $16 = $32
             # If NTBM: 10:23:12 - NTBM
             text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
             members_treeview.insert(day_id, "end", time_id, text=text)
-    
+
     duration_id = top_level_id + "_total_dur"
     total_duration_hours = member_info["duration"][0]
     # Whether the duration was adjusted b/c of max hours is set in the member object, so we don't have to compute it here
@@ -157,10 +159,18 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
 
 def get_only_current_data(data_df):
     """
-    Returns a dataframe with all logins before the specified log time processed time removed.
+    Returns a dataframe with all logins before the configured last log time processed time removed.
     """
     data_df = data_df.loc[
         (data_df["login_time"] >= pd.to_datetime(last_log_time_processed))]
+    return data_df
+
+
+def get_only_correct_type_data(data_df):
+    """
+    Returns a dataframe with all logins with reasons other than configured reason removed.
+    """
+    data_df = data_df.drop(data_df[data_df["login_reason"] != login_type_tag_to_search].index)
     return data_df
 
 
@@ -187,7 +197,7 @@ def process_member(member_df, member_name_lower):
         member_df_time_sorted = member_df_time_sorted.sort_values(by="login_time", ascending=True)
 
         dur_to_add, day_struct, warning_member = process_day_for_member(member_df_time_sorted, last_time,
-                                                                                   member_name_lower)
+                                                                        member_name_lower)
         last_time += timedelta(1)
         warnings.extend(warning_member)
 
@@ -250,6 +260,7 @@ def process_data(data_df):
     all_members = []
 
     data_df = get_only_current_data(data_df)
+    data_df = get_only_correct_type_data(data_df)
 
     for member_name_lower in data_df.name_lower.unique():
         member_df = data_df[data_df.name_lower == member_name_lower]
@@ -269,13 +280,13 @@ def clear_tree(tree):
 
 def preprocess_data(df):
     """
-    Removes unknown logins or logins with the wrong reason from provided df, and converts login_time column to 
+    Removes unknown logins, strips a lowercases login reason, and converts login_time column to
     a pandas datetime object.
     """
     global preprocessed_data_df
 
     df.drop(df[df["name_lower"] == "unknown"].index, inplace=True)
-    df.drop(df[df["login_reason"] != login_type_tag_to_search].index, inplace=True)
+    df["login_reason"] = df["login_reason"].map(lambda x: x.strip().lower())
     df["login_time"] = pd.to_datetime(df["login_time"])
     preprocessed_data_df = df
     return df
@@ -365,10 +376,10 @@ def member_search_name_update(stringvar):
 
 def setup_member_treeview_heading():
     """
-    Sets heading of members_treeview based on last log time.
+    Sets heading of members_treeview based on last log time and login type tag.
     """
-    # Format example: Logs since 11/12/23
-    members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")}")
+    # Format example: Logs since 11/12/23 - work to fly
+    members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")} - {login_type_tag_to_search}")
 
 
 def output_log():
@@ -377,7 +388,8 @@ def output_log():
     """
     os.makedirs('credit_logs', exist_ok=True)
     with open(f"credit_logs/credit_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"MANUAL Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+        f.write(
+            f"MANUAL Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
 
         for member in all_members:
             f.write(string.capwords(member["name"]) + "\n")
@@ -426,6 +438,7 @@ def open_confirm_window():
     """
     Opens the window with all the hours to credit.
     """
+
     def close_confirm_window():
         confirm_window.destroy()
         root.destroy()
@@ -434,16 +447,18 @@ def open_confirm_window():
     confirm_window = ctk.CTkToplevel(root)
     confirm_window.title("Confirm")
 
-    ctk.CTkLabel(confirm_window, text="Hours confirmed, log outputted to credit_logs/credit_log.txt").pack(padx=10, pady=10)
+    ctk.CTkLabel(confirm_window, text="Hours confirmed, log outputted to credit_logs/credit_log.txt").pack(padx=10,
+                                                                                                           pady=10)
 
     confirm_treevew = ttk.Treeview(confirm_window, height=20)
-    confirm_treevew.heading("#0", text="Member payment summary")
+    confirm_treevew.heading("#0", text=f"Member payment summary - {login_type_tag_to_search}")
     confirm_treevew.column("#0", width=400, stretch=tk.YES)
     confirm_treevew.pack(pady=10, padx=10)
 
     for member in all_members:
         duration = member["duration"][0]
-        confirm_treevew.insert("", "end", text=f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}")
+        confirm_treevew.insert("", "end",
+                               text=f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}")
 
     ctk.CTkButton(confirm_window, text="OK", width=100, command=close_confirm_window).pack(pady=10)
 
@@ -467,6 +482,7 @@ class OptionsMenu(tk.Tk):
     """
     Allows the user to edit various options without modifying config file.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -490,13 +506,12 @@ class OptionsMenu(tk.Tk):
         self.dollars_per_hour.insert(0, dollars_per_hour)
         self.dollars_per_hour.grid(row=2, column=1, padx=10, pady=5)
 
-        tk.Label(self, text="Login type to search?:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        tk.Label(self, text="Login type to search?:").grid(row=3, column=0, padx=10, pady=5, sticky="e")
         self.login_to_search = tk.Entry(self)
         self.login_to_search.insert(0, login_type_tag_to_search)
-        self.login_to_search.grid(row=2, column=1, padx=10, pady=5)
+        self.login_to_search.grid(row=3, column=1, padx=10, pady=5)
 
-        tk.Button(self, text="Confirm", command=self.save_changes).grid(row=3, column=0, columnspan=2, pady=10)
-
+        tk.Button(self, text="Confirm", command=self.save_changes).grid(row=4, column=0, columnspan=2, pady=10)
 
     def save_changes(self):
         """
@@ -510,7 +525,7 @@ class OptionsMenu(tk.Tk):
         last_log_time_processed = datetime.strptime(date_str, r"%m/%d/%y")
         setup_member_treeview_heading()
         dollars_per_hour = int(self.dollars_per_hour.get())
-        login_type_tag_to_search = self.login_to_search.lower()
+        login_type_tag_to_search = self.login_to_search.get().lower()
 
         filter_by_member_name()
 
