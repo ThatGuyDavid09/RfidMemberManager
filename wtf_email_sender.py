@@ -63,7 +63,7 @@ def preprocess_data(df):
     global preprocessed_data_df
 
     df.drop(df[df["name_lower"] == "unknown"].index, inplace=True)
-    df.drop(df[df["login_reason"] != "work to fly"].index, inplace=True)
+    df["login_reason"] = df["login_reason"].map(lambda x: x.strip().lower())
     df["login_time"] = pd.to_datetime(df["login_time"])
     preprocessed_data_df = df
     return df
@@ -167,6 +167,7 @@ def process_data(data_df, last_login_time):
     all_members = []
 
     data_df = get_only_current_data(data_df, last_login_time)
+    data_df.drop(data_df[data_df["login_reason"] != login_type_tag_to_search].index, inplace=True)
 
     for member_name_lower in data_df.name_lower.unique():
         member_df = data_df[data_df.name_lower == member_name_lower]
