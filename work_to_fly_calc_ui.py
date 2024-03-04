@@ -523,11 +523,12 @@ class OptionsMenu(tk.Tk):
         # Needed to allow proper processing by strptime
         date_str = "/".join([i.zfill(2) for i in self.earliest_log_date.get().split("/")])
         last_log_time_processed = datetime.strptime(date_str, r"%m/%d/%y")
-        setup_member_treeview_heading()
         dollars_per_hour = int(self.dollars_per_hour.get())
         login_type_tag_to_search = self.login_to_search.get().lower()
 
         filter_by_member_name()
+
+        setup_member_treeview_heading()
 
         self.destroy()
 
