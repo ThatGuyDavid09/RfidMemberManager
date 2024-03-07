@@ -41,9 +41,9 @@ def init_config(config_file):
     config = ConfigHandler(config_file)
     max_hrs_7_days = int(config.get_config_element("DEFAULT/MaxHoursPerWeek"))
     dollars_per_hour = int(config.get_config_element("DEFAULT/DollarsPerHour"))
-    login_type_tag_to_search = str(config.get_config_element("DEFAULT/LoginSearchTypeTag")).lower()
+    login_type_tag_to_search = str(config.get_config_element("DEFAULT/LoginSearchTypeTag")).lower().strip()
 
-    print(f"[INFO {str(datetime.now())}] Config initalized, login tag {login_type_tag_to_search}")
+    print(f"[INFO {str(datetime.now())}] Config initalized, login tag \"{login_type_tag_to_search}\"")
 
     return config
 
@@ -167,7 +167,7 @@ def process_data(data_df, last_login_time):
     all_members = []
 
     data_df = get_only_current_data(data_df, last_login_time)
-    data_df.drop(data_df[data_df["login_reason"] != login_type_tag_to_search].index, inplace=True)
+    data_df = data_df.drop(data_df[data_df["login_reason"] != login_type_tag_to_search].index)
 
     for member_name_lower in data_df.name_lower.unique():
         member_df = data_df[data_df.name_lower == member_name_lower]
@@ -303,7 +303,7 @@ message += ("-" * 60 + "\n\n")
 
 for email in receiver_emails:
     msg = MIMEText(message)
-    msg['Subject'] = f"Skin in the game logs since {last_log_time_processed_str}"
+    msg['Subject'] = f"Login logs since {last_log_time_processed_str} for \"{login_type_tag_to_search}\""
     msg['From'] = sender_email
 
     # if "general" in cfg_file:

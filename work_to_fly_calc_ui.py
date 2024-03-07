@@ -159,10 +159,14 @@ def process_day_for_member(sorted_logins_df, last_time, member_name_lower):
 
 def get_only_current_data(data_df):
     """
-    Returns a dataframe with all logins before the configured last log time processed time removed.
+    Returns a dataframe with all logins before the configured last log time processed and after latest time to process
+    time removed.
     """
     data_df = data_df.loc[
         (data_df["login_time"] >= pd.to_datetime(last_log_time_processed))]
+    if latest_time_to_process:
+        data_df = data_df.loc[
+        (data_df["login_time"] <= pd.to_datetime(latest_time_to_process))]
     return data_df
 
 
@@ -378,9 +382,12 @@ def setup_member_treeview_heading():
     """
     Sets heading of members_treeview based on last log time and login type tag.
     """
-    # Format example: Logs since 11/12/23 - work to fly
-    members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")} - {login_type_tag_to_search}")
-
+    # Format example: Logs since 11/12/23 through 11/24/23 - work to fly
+    # # If user specified last process date
+    # if (datetime.today() - latest_time_to_process).days > 1:
+    members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")} through {latest_time_to_process.strftime(r"%m/%d/%y")} - {login_type_tag_to_search}")
+    # else:
+    #     members_treeview.heading("#0", text=f"Logs since {last_log_time_processed.strftime(r"%m/%d/%y")} - {login_type_tag_to_search}")
 
 def output_log():
     """
@@ -388,8 +395,14 @@ def output_log():
     """
     os.makedirs('credit_logs', exist_ok=True)
     with open(f"credit_logs/credit_log.txt", "a", encoding="utf-8") as f:
-        f.write(
-            f"MANUAL Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+        # # If user specified last login time to process
+        # if (datetime.today() - latest_time_to_process).days > 1:
+        f.write(f"MANUAL Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")} through {latest_time_to_process.strftime(r"%m/%d/%y")}\n")
+        # else:
+        #     f.write(f"MANUAL Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+
+        # f.write(
+        #     f"MANUAL Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
 
         for member in all_members:
             f.write(string.capwords(member["name"]) + "\n")
@@ -499,30 +512,40 @@ class OptionsMenu(tk.Tk):
                                                       month=last_log_time_processed.month,
                                                       day=last_log_time_processed.day)
         self.earliest_log_date.grid(row=1, column=1, padx=10, pady=5)
+
+        tk.Label(self, text="Latest Log to Process:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        self.latest_log_date = tkcalendar.DateEntry(self, selectmode='day',
+                                                      year=latest_time_to_process.year,
+                                                      month=latest_time_to_process.month,
+                                                      day=latest_time_to_process.day)
+        self.latest_log_date.grid(row=2, column=1, padx=10, pady=5)
         # tk.Entry(self, text="Select Date", date=True)
 
-        tk.Label(self, text="Dollars per Hour:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        tk.Label(self, text="Dollars per Hour:").grid(row=3, column=0, padx=10, pady=5, sticky="e")
         self.dollars_per_hour = tk.Entry(self)
         self.dollars_per_hour.insert(0, dollars_per_hour)
-        self.dollars_per_hour.grid(row=2, column=1, padx=10, pady=5)
+        self.dollars_per_hour.grid(row=3, column=1, padx=10, pady=5)
 
-        tk.Label(self, text="Login type to search?:").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+        tk.Label(self, text="Login type to search?:").grid(row=4, column=0, padx=10, pady=5, sticky="e")
         self.login_to_search = tk.Entry(self)
         self.login_to_search.insert(0, login_type_tag_to_search)
-        self.login_to_search.grid(row=3, column=1, padx=10, pady=5)
+        self.login_to_search.grid(row=4, column=1, padx=10, pady=5)
 
-        tk.Button(self, text="Confirm", command=self.save_changes).grid(row=4, column=0, columnspan=2, pady=10)
+        tk.Button(self, text="Confirm", command=self.save_changes).grid(row=5, column=0, columnspan=2, pady=10)
 
     def save_changes(self):
         """
         Retrieve user settings from the associated entries at set into global variables. Also reprocesses data.
         """
-        global max_hrs_7_days, last_log_time_processed, dollars_per_hour, login_type_tag_to_search
+        global max_hrs_7_days, last_log_time_processed, latest_time_to_process, dollars_per_hour, login_type_tag_to_search
 
         max_hrs_7_days = int(self.max_hours_per_week.get())
         # Needed to allow proper processing by strptime
-        date_str = "/".join([i.zfill(2) for i in self.earliest_log_date.get().split("/")])
-        last_log_time_processed = datetime.strptime(date_str, r"%m/%d/%y")
+        last_date_str = "/".join([i.zfill(2) for i in self.earliest_log_date.get().split("/")])
+        last_log_time_processed = datetime.strptime(last_date_str, r"%m/%d/%y")
+      
+        latest_date_str = "/".join([i.zfill(2) for i in self.latest_log_date.get().split("/")])
+        latest_time_to_process = datetime.strptime(latest_date_str, r"%m/%d/%y")
         dollars_per_hour = int(self.dollars_per_hour.get())
         login_type_tag_to_search = self.login_to_search.get().lower()
 
@@ -534,6 +557,7 @@ class OptionsMenu(tk.Tk):
 
 
 last_log_time_processed = None
+latest_time_to_process = datetime.today()
 max_hrs_7_days = None
 dollars_per_hour = None
 login_type_tag_to_search = None
