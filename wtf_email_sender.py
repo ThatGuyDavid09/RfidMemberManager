@@ -43,7 +43,7 @@ def init_config(config_file):
     dollars_per_hour = int(config.get_config_element("DEFAULT/DollarsPerHour"))
     login_type_tag_to_search = str(config.get_config_element("DEFAULT/LoginSearchTypeTag")).lower()
 
-    print(f"[INFO {str(datetime.now())}] Config initalized")
+    print(f"[INFO {str(datetime.now())}] Config initalized, login tag {login_type_tag_to_search}")
 
     return config
 
@@ -236,8 +236,9 @@ port = 465
 smtp_server = "smtp.gmail.com"
 sender_email = "skininthegame@flightclub502.org" 
 # receiver_email = "liam.cantin@flightclub502.org"
-receiver_email = "iman.ghali@flightclub502.org"
-bcc_email = "iman.ghali@flightclub502.org"
+receiver_emails = ["iman.ghali@flightclub502.org", "liam.cantin@flightclub502.org"]
+# receiver_email = "iman.ghali@flightclub502.org"
+# bcc_email = "iman.ghali@flightclub502.org"
 password = "Skininthegame#502!"
 
 cfg_file = None
@@ -299,20 +300,24 @@ for member in all_members:
         " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
 message += ("-" * 60 + "\n\n")
 
-msg = MIMEText(message)
-msg['Subject'] = f"Skin in the game logs since {last_log_time_processed_str}"
-msg['From'] = sender_email
 
-if "general" in cfg_file:
-    msg['To'] = bcc_email
-else:
-    msg['To'] = receiver_email
+for email in receiver_emails:
+    msg = MIMEText(message)
+    msg['Subject'] = f"Skin in the game logs since {last_log_time_processed_str}"
+    msg['From'] = sender_email
 
-context = ssl.create_default_context()
-with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-    server.login(sender_email, password)
-    server.sendmail(sender_email, receiver_email, msg.as_string())
-print(f"[INFO {str(datetime.now())}] Email sent")
+    # if "general" in cfg_file:
+    msg['To'] = email
+    # else:
+        # msg['To'] = receiver_email
+
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, email, msg.as_string())
+    print(f"[INFO {str(datetime.now())}] Email to {email} sent")
+
+
 output_log(all_members)
 print(f"[INFO {str(datetime.now())}] Log outputted")
 print(f"--------------------")
