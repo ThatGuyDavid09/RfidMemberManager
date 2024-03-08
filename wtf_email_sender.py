@@ -236,7 +236,11 @@ port = 465
 smtp_server = "smtp.gmail.com"
 sender_email = "skininthegame@flightclub502.org" 
 # receiver_email = "liam.cantin@flightclub502.org"
-receiver_emails = ["iman.ghali@flightclub502.org", "liam.cantin@flightclub502.org"]
+receiver_emails = [
+                    "iman.ghali@flightclub502.org", 
+                    "liam.cantin@flightclub502.org",
+                    "dkaplan0901@gmail.com",
+                    "lincoln.macdonald@flightclub502.org"]
 # receiver_email = "iman.ghali@flightclub502.org"
 # bcc_email = "iman.ghali@flightclub502.org"
 password = "Skininthegame#502!"
