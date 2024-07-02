@@ -252,7 +252,7 @@ else:
     cfg_file = "config.ini"
 init_config(cfg_file)
 
-members_df = pd.read_csv(r"C:\Users\fligh\Documents\RfidMemberManager\data\login_log.csv")
+members_df = pd.read_csv(r".\data\login_log.csv")
 print(f"[INFO {str(datetime.now())}] Data loaded")
 members_df = preprocess_data(members_df)
 print(f"[INFO {str(datetime.now())}] Data preprocessed")
