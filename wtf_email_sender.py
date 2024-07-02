@@ -259,6 +259,10 @@ print(f"[INFO {str(datetime.now())}] Data preprocessed")
 all_members = process_data(members_df, last_log_time_processed)
 print(f"[INFO {str(datetime.now())}] Data processed")
 
+if not all_members:
+    print(f"[INFO {str(datetime.now())}] No data detected, exiting")
+    sys.exit(0)
+
 # message = f"Logs since {last_log_time_processed_str}\n"
 
 # message += "To credit by member:\n"
@@ -320,7 +324,6 @@ for email in receiver_emails:
         server.login(sender_email, password)
         server.sendmail(sender_email, email, msg.as_string())
     print(f"[INFO {str(datetime.now())}] Email to {email} sent")
-
 
 output_log(all_members)
 print(f"[INFO {str(datetime.now())}] Log outputted")
