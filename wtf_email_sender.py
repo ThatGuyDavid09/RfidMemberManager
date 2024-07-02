@@ -18,7 +18,7 @@ else: # Task run on the 15th, need every day since last day of last month, inclu
     last_log_time_processed = (today.replace(day=1) - timedelta(days=1)).date()
 
 # last_log_time_processed = datetime.today().date() - timedelta(weeks=2)
-last_log_time_processed_str = last_log_time_processed.strftime(r"%d/%m/%y")
+last_log_time_processed_str = last_log_time_processed.strftime(r"%m/%d/%y")
 max_hrs_7_days = None
 dollars_per_hour = None
 login_type_tag_to_search = None
