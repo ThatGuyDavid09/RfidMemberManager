@@ -260,8 +260,7 @@ all_members = process_data(members_df, last_log_time_processed)
 print(f"[INFO {str(datetime.now())}] Data processed")
 
 if not all_members:
-    print(f"[INFO {str(datetime.now())}] No data detected, exiting")
-    sys.exit(0)
+    print(f"[INFO {str(datetime.now())}] No data detected")
 
 # message = f"Logs since {last_log_time_processed_str}\n"
 
@@ -272,6 +271,9 @@ if not all_members:
 
 # Too lazy to make more customizable, just same as log file
 message = (f"AUTO Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+
+if not all_members:
+    message += "No logins detected over this timeframe."
 
 for member in all_members:
     message += (string.capwords(member["name"]) + "\n")
