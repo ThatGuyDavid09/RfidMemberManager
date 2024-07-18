@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 import sys
+import traceback
 
 import smtplib, ssl
 
@@ -231,102 +232,126 @@ def output_log(all_members):
                 " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
         f.write("-" * 60 + "\n\n")
 
-check_log_file_size()
-port = 465 
-smtp_server = "smtp.gmail.com"
-sender_email = "skininthegame@flightclub502.org" 
-# receiver_email = "liam.cantin@flightclub502.org"
-receiver_emails = [
-                    "iman.ghali@flightclub502.org", 
-                    "liam.cantin@flightclub502.org",
-                    "dkaplan0901@gmail.com",
-                    "lincoln.macdonald@flightclub502.org"]
-# receiver_email = "iman.ghali@flightclub502.org"
-# bcc_email = "iman.ghali@flightclub502.org"
-password = "Skininthegame#502!"
-
-cfg_file = None
-if len(sys.argv) > 1:
-    cfg_file = sys.argv[1]
-else:
-    cfg_file = "config.ini"
-init_config(cfg_file)
-
-members_df = pd.read_csv(r".\data\login_log.csv")
-print(f"[INFO {str(datetime.now())}] Data loaded")
-members_df = preprocess_data(members_df)
-print(f"[INFO {str(datetime.now())}] Data preprocessed")
-all_members = process_data(members_df, last_log_time_processed)
-print(f"[INFO {str(datetime.now())}] Data processed")
-
-if not all_members:
-    print(f"[INFO {str(datetime.now())}] No data detected")
-
-# message = f"Logs since {last_log_time_processed_str}\n"
-
-# message += "To credit by member:\n"
-# for member in all_members:
-#     duration = member["duration"][0]
-#     message += " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n"
-
-# Too lazy to make more customizable, just same as log file
-message = (f"AUTO Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
-
-if not all_members:
-    message += "No logins detected over this timeframe."
-
-for member in all_members:
-    message += (string.capwords(member["name"]) + "\n")
-    total_duration_hours = 0
-    for day in member["days"]:
-        # For display only.
-        seconds_for_day = sum(
-            [(time[1] - time[0]).total_seconds() for time in day["times"] if
-                type(time[1]) != str])
-        time_text, hours_for_day = get_display_text_and_hours(seconds_for_day)
-        day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {time_text} * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
-        message += (" " * 4 + day_text + "\n")
-
-        for start, end in day["times"]:
-            duration = None if end == "NTBM" else end - start
-            duration_seconds = None if duration is None else duration.total_seconds()
-            sub_dur_text, duration_hours = get_display_text_and_hours(duration_seconds)
-            dur_text = "" if duration is None else f": {sub_dur_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
-            time_text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
-            message += (" " * 8 + time_text + "\n")
-    total_duration_hours = member["duration"][0]
-    if member["duration"][1]:
-        message += (" " * 4 + f"More than max hours! Adjusted\n")
-        message += (
-            " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
-    else:
-        message += (
-            " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
-message += ("\n")
-message += ("To credit by member:\n")
-for member in all_members:
-    duration = member["duration"][0]
-    message += (
-        " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
-message += ("-" * 60 + "\n\n")
-
-
-for email in receiver_emails:
-    msg = MIMEText(message)
-    msg['Subject'] = f"Login logs since {last_log_time_processed_str} for \"{login_type_tag_to_search}\""
-    msg['From'] = sender_email
-
-    # if "general" in cfg_file:
-    msg['To'] = email
-    # else:
-        # msg['To'] = receiver_email
-
+def send_emails(to_emails, from_email, subject, message):
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
         server.login(sender_email, password)
-        server.sendmail(sender_email, email, msg.as_string())
-    print(f"[INFO {str(datetime.now())}] Email to {email} sent")
+        for to_email in to_emails:
+            msg = MIMEText(message)
+            msg['Subject'] = subject
+            msg['From'] = from_email
+            msg['To'] = to_email
+            server.sendmail(from_email, to_email, msg.as_string())
+            print(f"[INFO {str(datetime.now())}] Email to {to_email} sent")
 
-output_log(all_members)
-print(f"[INFO {str(datetime.now())}] Log outputted")
-print(f"--------------------")
+
+def main():
+    check_log_file_size()
+
+    cfg_file = None
+    if len(sys.argv) > 1:
+        cfg_file = sys.argv[1]
+    else:
+        cfg_file = "config.ini"
+    init_config(cfg_file)
+
+    members_df = pd.read_csv(r".\data\login_log.csv")
+    print(f"[INFO {str(datetime.now())}] Data loaded")
+    members_df = preprocess_data(members_df)
+    print(f"[INFO {str(datetime.now())}] Data preprocessed")
+    all_members = process_data(members_df, last_log_time_processed)
+    print(f"[INFO {str(datetime.now())}] Data processed")
+
+    if not all_members:
+        print(f"[INFO {str(datetime.now())}] No data detected")
+
+    # message = f"Logs since {last_log_time_processed_str}\n"
+
+    # message += "To credit by member:\n"
+    # for member in all_members:
+    #     duration = member["duration"][0]
+    #     message += " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n"
+
+    # Too lazy to make more customizable, just same as log file
+    message = (f"AUTO Processed \"{login_type_tag_to_search}\" on {datetime.now().strftime(r"%m/%d/%y")}, logs since {last_log_time_processed.strftime(r"%m/%d/%y")}\n")
+
+    if not all_members:
+        message += "No logins detected over this timeframe."
+
+    for member in all_members:
+        message += (string.capwords(member["name"]) + "\n")
+        total_duration_hours = 0
+        for day in member["days"]:
+            # For display only.
+            seconds_for_day = sum(
+                [(time[1] - time[0]).total_seconds() for time in day["times"] if
+                    type(time[1]) != str])
+            time_text, hours_for_day = get_display_text_and_hours(seconds_for_day)
+            day_text = f"{day["day"].strftime(r"%m/%d/%y")} - {time_text} * ${dollars_per_hour} = ${hours_for_day * dollars_per_hour}"
+            message += (" " * 4 + day_text + "\n")
+
+            for start, end in day["times"]:
+                duration = None if end == "NTBM" else end - start
+                duration_seconds = None if duration is None else duration.total_seconds()
+                sub_dur_text, duration_hours = get_display_text_and_hours(duration_seconds)
+                dur_text = "" if duration is None else f": {sub_dur_text} * ${dollars_per_hour} = ${duration_hours * dollars_per_hour}"
+                time_text = f"{start.strftime(r"%H:%M:%S")} - {"NTBM" if duration is None else end.strftime(r"%H:%M:%S")}" + dur_text
+                message += (" " * 8 + time_text + "\n")
+        total_duration_hours = member["duration"][0]
+        if member["duration"][1]:
+            message += (" " * 4 + f"More than max hours! Adjusted\n")
+            message += (
+                " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+        else:
+            message += (
+                " " * 4 + f"Total: {total_duration_hours} hours * ${dollars_per_hour} = ${total_duration_hours * dollars_per_hour}\n")
+    message += ("\n")
+    message += ("To credit by member:\n")
+    for member in all_members:
+        duration = member["duration"][0]
+        message += (
+            " " * 4 + f"{string.capwords(member["name"])}: {duration} hours * ${dollars_per_hour} = ${duration * dollars_per_hour}\n")
+    message += ("-" * 60 + "\n\n")
+
+    subject = f"Login logs since {last_log_time_processed_str} for \"{login_type_tag_to_search}\""
+    send_emails(receiver_emails, sender_email, subject, message)
+            
+
+    output_log(all_members)
+    print(f"[INFO {str(datetime.now())}] Log outputted")
+
+if __name__ == "__main__":
+    # Globals
+    port = 465 
+    smtp_server = "smtp.gmail.com"
+    sender_email = "skininthegame@flightclub502.org" 
+    # receiver_email = "liam.cantin@flightclub502.org"
+    receiver_emails = [
+                        "iman.ghali@flightclub502.org", 
+                        # "liam.cantin@flightclub502.org",
+                        "dkaplan0901@gmail.com"
+                        "lincoln.macdonald@flightclub502.org"
+                        ]
+    # receiver_email = "iman.ghali@flightclub502.org"
+    # bcc_email = "iman.ghali@flightclub502.org"
+    password = "Skininthegame#502!"
+    
+    print(f"[INFO {str(datetime.now())}] Started")
+    try:
+        main()
+    except Exception as e:
+        a = 2+2
+        message = "Calculation and processing failed. Please contact whoever maintains this system.\n"
+        message += "Error message for debugging is below.\n\n"
+        message += f"{str(e).capitalize()}\n"
+        message += traceback.format_exc()
+
+        # Need to print so it shows up in logs
+        print(f"[ERROR {str(datetime.now())}] {str(e).capitalize()}, traceback below")
+        print(traceback.format_exc())
+
+        subject = f"Failed to process \"{login_type_tag_to_search}\" on {datetime.now()}"
+        send_emails(receiver_emails, sender_email, subject, message)
+
+    print(f"[INFO {str(datetime.now())}] Exiting")
+    print(f"--------------------")
