@@ -340,7 +340,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        a = 2+2
         message = "Calculation and processing failed. Please contact whoever maintains this system.\n"
         message += "Error message for debugging is below.\n\n"
         message += f"{str(e).capitalize()}\n"
