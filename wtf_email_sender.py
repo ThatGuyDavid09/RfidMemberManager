@@ -329,7 +329,7 @@ if __name__ == "__main__":
     receiver_emails = [
                         "iman.ghali@flightclub502.org", 
                         # "liam.cantin@flightclub502.org",
-                        "dkaplan0901@gmail.com"
+                        "dkaplan0901@gmail.com",
                         "lincoln.macdonald@flightclub502.org"
                         ]
     # receiver_email = "iman.ghali@flightclub502.org"
